@@ -80,8 +80,26 @@ distance_between_two = opt.minimize(
     tol=1e-6                 
 )
 
-#This is the function to be optimized
-def The_Atom_Space(x1, y1, x2, y2):
+#This is the function to be optimized added bools to ensure bond angle and atom location will only be returned when wanted
+def The_Atom_Space(x1, y1, x2, y2, calcbondangle = False, giveatomlocation = False):
+    """
+    Computes the Potental Energy, Bond Lengths, Bond Angles, and atom location in 3D space
+    Parameters:
+
+    x1 (Float): The X position of atom 2
+    y1 (Float): The Y position of atom 2
+    x1 (Float): The X position of atom 3
+    y1 (Float): The Y position of atom 3
+
+    calcbondangle (Bolean): True if you want the Bond Angles and Lengths returned, otherwise false
+    giveatomlocation (Bolean): True if you want the Atom Location returned, otherwise false
+
+    The function will ONLY return one piece of information at a time so choose carefully what you want
+
+    Returns:
+    Float: The total potental energy and any asked for information
+    """
+    
     #Locks one atom's position at 0,0,0. We won't be using the since three points will always form a plane, but I need three inputs to run my function
     #Directory so I have a number I can use to prevent re-running the same length. That bug was a non issue in HW 1-2 but it would ruin everything here.
     Atoms = {
@@ -91,6 +109,8 @@ def The_Atom_Space(x1, y1, x2, y2):
     #Setting up our function variables for later
     energies = []
     bond_lengths = []
+    bond_angles = []
+    atom_locations = []
     for value1, atom1 in Atoms.items():
         for value2, atom2 in Atoms.items():
             #If statement ensures we have 2 different atoms and prevents the same length from being run twice. 
@@ -107,8 +127,31 @@ def The_Atom_Space(x1, y1, x2, y2):
 
     #Sums together all the energies
     total_potental = sum(energies)
-
-    return total_potental
+    
+    #Calls for bond_angle calculations only if asked
+    if calcbondangle == True:
+        #Nested for loop allows us to grab three atoms from molecules instead of one
+        for atom1, value1 in Atoms.items():
+            for atom2, value2 in Atoms.items():
+                for atom3, value3 in Atoms.items():
+                    #If statement ensures we have 3 different atoms
+                    if atom1 != atom2 and atom2 != atom3 and atom1 != atom3:
+                     #Calls the bond angle function and adds the result to the empty array
+                        BA = Bond_Angle(value1, value2, value3)
+                        #Stops the appending of invalid values
+                        if BA != None:
+                            bond_angles.append(BA)
+    #Packages Atom Locations if asked
+    if giveatomlocation == True:
+        for atom, value in Atoms.items():
+            atom_locations.append(value)
+    
+    #Gives requested information
+    if calcbondangle == False and giveatomlocation == False:
+        return total_potental
+    else:
+        return bond_angles, bond_lengths if calcbondangle == True else atom_locations
+    #In retrospect I could have just written multiple functions but this is way cooler
 
 #A print for testing
-print(The_Atom_Space(1,1,2,0))
+print(The_Atom_Space(1,1,2,0,True))
