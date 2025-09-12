@@ -12,7 +12,7 @@ def lennard_jones(r, epsilon=0.01, sigma=3.4):
 
 distance_between_two = opt.minimize(
     #This is the function
-    fun=lennard_jones,  # Objective function to minimize
+    fun=lennard_jones,  
     #This is the initial guess
     x0=0,                    
     #The arguments of the function scipy is not allowed to change

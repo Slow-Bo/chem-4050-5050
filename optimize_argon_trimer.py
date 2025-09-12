@@ -67,24 +67,15 @@ def lennard_jones(r, epsilon=0.01, sigma=3.4):
     Atomic_Energy = 4*epsilon*((sigma/r)**12-(sigma/r)**6)
     return Atomic_Energy
 
-distance_between_two = opt.minimize(
-    #This is the function
-    fun=lennard_jones,  # Objective function to minimize
-    #This is the initial guess
-    x0=0,                    
-    #The arguments of the function scipy is not allowed to change
-    args=(0.01, 3.4),
-    #This is the method, I don't remeber the difference between them so I'm using the first one taught in class
-    method="Nelder-Mead",    
-    #This is the tolernace because computers have yet to acheve perfection
-    tol=1e-6                 
-)
+
 
 #This is the function to be optimized added bools to ensure bond angle and atom location will only be returned when wanted
-def The_Atom_Space(x1, x2, y2, calcbondangle = False, giveatomlocation = False):
+def The_Atom_Space(locals = [0,0,0], calcbondangle = False, giveatomlocation = False):
     """
     Computes the Potental Energy, Bond Lengths, Bond Angles, and atom location in 3D space
     Parameters:
+
+    locals[x1, x2, y2] where:
 
     x1 (Float): The X position of atom 2
     x2 (Float): The X position of atom 3
@@ -103,8 +94,8 @@ def The_Atom_Space(x1, x2, y2, calcbondangle = False, giveatomlocation = False):
     #Directory so I have a number I can use to prevent re-running the same length. That bug was a non issue in HW 1-2 but it would ruin everything here.
     Atoms = {
         1 : [0,0,0], 
-        2 : [x1,0,0], 
-        3 : [x2,y2,0]}
+        2 : [locals[0],0,0], 
+        3 : [locals[1],locals[2],0]}
     #Setting up our function variables for later
     energies = []
     bond_lengths = []
@@ -117,8 +108,7 @@ def The_Atom_Space(x1, x2, y2, calcbondangle = False, giveatomlocation = False):
                 #Calls the bond length function and adds the result to the empty array
                 BL = Bond_Length(atom1, atom2)
                 #Stops the appending of invalid values
-                if BL != None:
-                    bond_lengths.append(BL)
+                bond_lengths.append(BL)
     #Calculates the energy for each argon distance in the trimer
     for r in bond_lengths:
         V = lennard_jones(r)
@@ -158,6 +148,18 @@ def The_Atom_Space(x1, x2, y2, calcbondangle = False, giveatomlocation = False):
         return bond_angles, bond_lengths if calcbondangle == True else atom_locations
     #In retrospect I could have just written multiple functions but this is way cooler
 
+distance_between_three = opt.minimize(
+    #This is the function
+    fun=The_Atom_Space,  
+    #This is the initial guess 3.6 was the optimal distance in problem 1
+    x0=[3.6,1.8,3.12],                    
+    #The arguments of the function scipy is not allowed to change
+    args=(False, False),
+    #This is the method, I don't remeber the difference between them so I'm using the first one taught in class
+    method="Nelder-Mead",    
+    #This is the tolernace because computers have yet to acheve perfection
+    tol=1e-6                 
+)
 
 #A print for testing
-print(The_Atom_Space(2,1,1))
+print(The_Atom_Space(distance_between_three["x"]))
