@@ -26,7 +26,9 @@ distance_between_two = opt.minimize(
     #This is the function
     fun=lennard_jones,  # Objective function to minimize
     #This is the initial guess
-    x0=0,                    # Initial guess
+    x0=0,                    
+    #The arguments of the function scipy is not allowed to change
+    args=(0.01, 3.4),
     #This is the method, I don't remeber the difference between them so I'm using the first one taught in class
     method="Nelder-Mead",    
     #This is the tolernace because computers have yet to acheve perfection
