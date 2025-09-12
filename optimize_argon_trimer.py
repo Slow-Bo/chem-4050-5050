@@ -13,12 +13,15 @@ def Bond_Length(Atom1 = [0, 0, 0], Atom2 = [0, 0, 0]):
         diff = (Atom1[position] - Atom2[position])**2
         distance += diff
     return np.sqrt(distance)
-    #Checks to see if bond length is valid
+    """
+    Removed check for valid bond lengths, Argon is not one for close relationships
+
     if 0 < np.sqrt(distance) < 1.5:
         # returns the square root of the diffrences squared as per pythagoras' theorm
         return np.sqrt(distance)
     else:
         pass
+    """
 
 #A function for subtracting one vector from aonther
 def VecSubtract(vector01, vector02):
@@ -76,3 +79,36 @@ distance_between_two = opt.minimize(
     #This is the tolernace because computers have yet to acheve perfection
     tol=1e-6                 
 )
+
+#This is the function to be optimized
+def The_Atom_Space(x1, y1, x2, y2):
+    #Locks one atom's position at 0,0,0. We won't be using the since three points will always form a plane, but I need three inputs to run my function
+    #Directory so I have a number I can use to prevent re-running the same length. That bug was a non issue in HW 1-2 but it would ruin everything here.
+    Atoms = {
+        1 : [0,0,0], 
+        2 : [x1,y1,0], 
+        3 : [x2,y2,0]}
+    #Setting up our function variables for later
+    energies = []
+    bond_lengths = []
+    for value1, atom1 in Atoms.items():
+        for value2, atom2 in Atoms.items():
+            #If statement ensures we have 2 different atoms and prevents the same length from being run twice. 
+            if value1 < value2:
+                #Calls the bond length function and adds the result to the empty array
+                BL = Bond_Length(atom1, atom2)
+                #Stops the appending of invalid values
+                if BL != None:
+                    bond_lengths.append(BL)
+    #Calculates the energy for each argon distance in the trimer
+    for r in bond_lengths:
+        V = lennard_jones(r)
+        energies.append(V)
+
+    #Sums together all the energies
+    total_potental = sum(energies)
+
+    return total_potental
+
+#A print for testing
+print(The_Atom_Space(1,1,2,0))
