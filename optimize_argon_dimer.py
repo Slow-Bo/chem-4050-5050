@@ -16,5 +16,21 @@ def Atomic_Distance(Atom1 = [0, 0, 0], Atom2 = [0, 0, 0]):
         distance += diff
     return np.sqrt(distance)
 
+    #A simple function that takes an input of r (and potentially epsilon and sigma) and outputs the atomic energy
 def lennard_jones(r, epsilon=0.01, sigma=3.4):
-    pass
+    
+    Atomic_Energy = 4*epsilon*((sigma/r)**12-(sigma/r)**6)
+    return Atomic_Energy
+
+distance_between_two = opt.minimize(
+    #This is the function
+    fun=lennard_jones,  # Objective function to minimize
+    #This is the initial guess
+    x0=0,                    # Initial guess
+    #This is the method, I don't remeber the difference between them so I'm using the first one taught in class
+    method="Nelder-Mead",    
+    #This is the tolernace because computers have yet to acheve perfection
+    tol=1e-6                 
+)
+
+print(distance_between_two)
