@@ -35,4 +35,20 @@ distance_between_two = opt.minimize(
     tol=1e-6                 
 )
 
-print(distance_between_two)
+#A print used for testing
+#print(distance_between_two["x"][0])
+
+#graphs the lennard jones function so that the y value is the function at the given X value.
+x = np.linspace(3, 6, 100)
+y = lennard_jones(x)
+
+#Marks the calculated minimum with a red dot
+plt.scatter(distance_between_two["x"][0], lennard_jones(distance_between_two["x"][0]), color='red', edgecolor='black', s=50, zorder=5, label="Calculated Minimum")
+
+#creates a plot of the polynomial and the original data.
+plt.plot(x, y, linestyle = '-',marker='', color='blue', label='Lennard Jones Function')
+plt.xlabel('Distance in Angstroms')
+plt.ylabel('Potential Energy')
+plt.legend()
+plt.title('The relationship of energy and distance')
+plt.show()
