@@ -178,6 +178,7 @@ def completing_the_mission():
 def file_creator():
     #Gets the atom locations, using the [1] to ignore the garbage data
     locals = The_Atom_Space(distance_between_three["x"], False, True)[1]
+
     #Converts the data to a Pandas Dataframe
     df = pd.DataFrame(locals, index=['Ar1', 'Ar2', "Ar3"],columns=['','',''])
     #adds the lables nessasary for the XYZ file format
@@ -186,7 +187,7 @@ def file_creator():
     #rearanges dataframe so that the lable is on top
     df = df.reindex(['3','Argon Trimer','Ar1','Ar2','Ar3'])
     #Makes the file
-    df.to_csv('ArgonTrimer.xyz', sep=' ',index=True)
+    df.to_csv('./homework-2-1/ArgonTrimer.xyz', sep=' ',index=True, columns= None, header= False)
     #Prints the Panda Dataframe so I can see I put it together right
     print(df)
 
