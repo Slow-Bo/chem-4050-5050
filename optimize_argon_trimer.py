@@ -148,6 +148,7 @@ def The_Atom_Space(locals = [0,0,0], calcbondangle = False, giveatomlocation = F
         return bond_angles, bond_lengths if calcbondangle == True else atom_locations
     #In retrospect I could have just written multiple functions but this is way cooler
 
+#This is the function that does the optimization
 distance_between_three = opt.minimize(
     #This is the function
     fun=The_Atom_Space,  
@@ -162,4 +163,33 @@ distance_between_three = opt.minimize(
 )
 
 #A print for testing
-print(The_Atom_Space(distance_between_three["x"]))
+#print(The_Atom_Space(distance_between_three["x"], False, True))
+
+#The Print function for completing the assignment
+def completing_the_mission():
+    print("Optimal Atom Locations in Angstroms")
+    #For some reason when appending the atom space it gets a garbage array that I can't figure out how to remove in slot 1, the [1] lets me ignore that quirk
+    print(The_Atom_Space(distance_between_three["x"], False, True))[1]
+    print("The bond lengths and angles between atoms")
+    print(The_Atom_Space(distance_between_three["x"], True, False))
+    print("The triangle appears to be equilateral, with the same angles and distances between atoms")
+
+#The function that makes the file
+def file_creator():
+    #Gets the atom locations, using the [1] to ignore the garbage data
+    locals = The_Atom_Space(distance_between_three["x"], False, True)[1]
+    #Converts the data to a Pandas Dataframe
+    df = pd.DataFrame(locals, index=['Ar1', 'Ar2', "Ar3"],columns=['','',''])
+    #adds the lables nessasary for the XYZ file format
+    df.loc['Argon Trimer'] = ['', '', '']
+    df.loc['3'] = ['','','']
+    #rearanges dataframe so that the lable is on top
+    df = df.reindex(['3','Argon Trimer','Ar1','Ar2','Ar3'])
+    #Makes the file
+    df.to_csv('ArgonTrimer.xyz', sep=' ',index=True)
+    #Prints the Panda Dataframe so I can see I put it together right
+    print(df)
+
+
+
+file_creator()
