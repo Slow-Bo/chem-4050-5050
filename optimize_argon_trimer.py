@@ -169,7 +169,7 @@ distance_between_three = opt.minimize(
 def completing_the_mission():
     print("Optimal Atom Locations in Angstroms")
     #For some reason when appending the atom space it gets a garbage array that I can't figure out how to remove in slot 1, the [1] lets me ignore that quirk
-    print(The_Atom_Space(distance_between_three["x"], False, True))[1]
+    print(The_Atom_Space(distance_between_three["x"], False, True)[1])
     print("The bond lengths and angles between atoms")
     print(The_Atom_Space(distance_between_three["x"], True, False))
     print("The triangle appears to be equilateral, with the same angles and distances between atoms")
@@ -178,9 +178,20 @@ def completing_the_mission():
 def file_creator():
     #Gets the atom locations, using the [1] to ignore the garbage data
     locals = The_Atom_Space(distance_between_three["x"], False, True)[1]
-
-    #Converts the data to a Pandas Dataframe
-    df = pd.DataFrame(locals, index=['Ar1', 'Ar2', "Ar3"],columns=['','',''])
+    
+    #Pandas was not taking my sig figs seriously, this secton of code converts my array of arrays into a new array of arrays where all my values are strings
+    #This is not a good way to do this, but it was the only way I could figure out on my own
+    locals2 = []
+    for i in locals:
+        blank_array = []
+        for n in i:
+            n = "{:.6f}".format(n)
+            blank_array.append(n)
+        locals2.append(blank_array)
+    
+    #Converts the stringed data to a Pandas Dataframe
+    df = pd.DataFrame(locals2, index=['Ar1', 'Ar2', "Ar3"],columns=['','',''])
+    
     #adds the lables nessasary for the XYZ file format
     df.loc['Argon Trimer'] = ['', '', '']
     df.loc['3'] = ['','','']
@@ -190,7 +201,8 @@ def file_creator():
     df.to_csv('./homework-2-1/ArgonTrimer.xyz', sep=' ',index=True, columns= None, header= False)
     #Prints the Panda Dataframe so I can see I put it together right
     print(df)
+    
 
-
-
+#Runs all my functions
 file_creator()
+completing_the_mission()
