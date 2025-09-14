@@ -55,9 +55,9 @@ def square_well(r):
             #Modifys each number in the array to be what it needs to be since transfering the modified numbers to a new array dosn't work
             if n < Sigma:
                 r[Counter] = 1000
-            elif Sigma <= n < WellRange * Sigma:
+            elif Sigma <= n < (WellRange * Sigma):
                 r[Counter] = -Epsilon
-            else:
+            elif n > (WellRange * Sigma):
                 r[Counter] = 0
         return r
     else:
@@ -124,19 +124,30 @@ yhs = []
 ysw = []
 ylj = []
 #Runs a for loop intigrating each value of x one at a time
+
 for i in range(len(x)):
 #Finds the integrals at each value X (assuming it dosn't blow up my laptop)
-    yhs.append(TheIntagrateInator(bind_arguments(B2V,hard_sphere,x[i]),1/1000, 5*Sigma, 1000))
-    ysw.append(TheIntagrateInator(bind_arguments(B2V,square_well,x[i]),1/1000, 5*Sigma, 1000))
-    ylj.append(TheIntagrateInator(bind_arguments(B2V,lennard_jones,x[i]),1/1000, 5*Sigma, 1000))
-print(yhs)
+#also divides all the functions by their order of magnitude so they appear on the same graph
+    yhs.append(TheIntagrateInator(bind_arguments(B2V,hard_sphere,x[i]),1/1000, 5*Sigma, 1000)/10**30)
+    ysw.append(TheIntagrateInator(bind_arguments(B2V,square_well,x[i]),1/1000, 5*Sigma, 1000)/10**30)
+    ylj.append(TheIntagrateInator(bind_arguments(B2V,lennard_jones,x[i]),1/1000, 5*Sigma, 1000)/10**23)
+
 
 #creates a plot of the polynomial and the original data.
-"""plt.plot(x, yhs, linestyle = '-',marker='', color='blue', label='Hard Sphere Function')
-plt.plot(x, ysw, linestyle = '-',marker='', color='black', label='Square Well Function')
-plt.plot(x, ylj, linestyle = '-',marker='', color='red', label='Lennard Jones Function')
+plt.plot(x, yhs, linestyle = '-',marker='', color='blue', label='Hard Sphere Function/10^30')
+plt.plot(x, ysw, linestyle = '-',marker='', color='red', label='Square Well Function/10^30')
+plt.plot(x, ylj, linestyle = '-',marker='', color='green', label='Lennard Jones Function/10^23')
+plt.axhline(0,0,Sigma*5,linestyle = '-',marker='', color='black', label='B2V = 0')
 plt.xlabel('Temperature')
 plt.ylabel('Second virial coefficient')
 plt.legend()
 plt.title('The second viral coeffeicent using different functions to calculate potental energy')
-plt.show()"""
+plt.show()
+
+"""The first thing to notice is that the second viral coeffeicent for the Square Well and Hard Sphere potentials were much more simmilar
+than the lennard jones function. This makes sense as outside of the titular square well they have the same value. 
+They were also less efected by temperature, which makes since sense the factor including temperature is always irrelevent for hard sphere,
+Since it is always multiplied by either 0 or infinity, and it is almost irrelevent for the square well since it is only important within,
+The square well, and even then not super important since epsilon is so small. The function that varies the most with temperature is the Lannard Jones function
+This function actually produces a reasonable value at each distance. It is also several orders of magnitude smaller then the other two probably because it
+lacks a large range where it goes off to infinity. """
