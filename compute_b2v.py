@@ -23,7 +23,7 @@ def lennard_jones(r, epsilon = Epsilon, sigma = Sigma):
     return Atomic_Energy
 
 #Another function for hard sphere potential
-def Hard_Sphere(r):
+def hard_sphere(r):
     #The trapazoid function runs an array through the functions to be intigrated so this is to allow for that
     if isinstance(r, np.ndarray):  
         #Sees where each number in the array would fall in the hard sphere argument and appends the output accordingly
@@ -45,7 +45,7 @@ def Hard_Sphere(r):
             return 0
 
 #One more function for square well potential
-def Square_well(r):
+def square_well(r):
     #The trapazoid function runs an array through the functions to be intigrated so this is to allow for that
     if isinstance(r, np.ndarray):
         for n in r:
@@ -115,3 +115,28 @@ def bind_arguments(func, *args, **kwargs):
 #Goal = TheIntagrateInator(B2VHSat100,1/1000, 17.0, 1000)
 #print(Goal)
 
+#Creates the range of temperatures over which B2V will be evaluated
+x = np.linspace(100, 800, 1000)
+
+#Because of the way I bound functions together the linespace only generates 1 value for y, when I use x but I have a solution
+#Defining the arrays to be graphed
+yhs = []
+ysw = []
+ylj = []
+#Runs a for loop intigrating each value of x one at a time
+for i in range(len(x)):
+#Finds the integrals at each value X (assuming it dosn't blow up my laptop)
+    yhs.append(TheIntagrateInator(bind_arguments(B2V,hard_sphere,x[i]),1/1000, 5*Sigma, 1000))
+    ysw.append(TheIntagrateInator(bind_arguments(B2V,square_well,x[i]),1/1000, 5*Sigma, 1000))
+    ylj.append(TheIntagrateInator(bind_arguments(B2V,lennard_jones,x[i]),1/1000, 5*Sigma, 1000))
+print(yhs)
+
+#creates a plot of the polynomial and the original data.
+"""plt.plot(x, yhs, linestyle = '-',marker='', color='blue', label='Hard Sphere Function')
+plt.plot(x, ysw, linestyle = '-',marker='', color='black', label='Square Well Function')
+plt.plot(x, ylj, linestyle = '-',marker='', color='red', label='Lennard Jones Function')
+plt.xlabel('Temperature')
+plt.ylabel('Second virial coefficient')
+plt.legend()
+plt.title('The second viral coeffeicent using different functions to calculate potental energy')
+plt.show()"""
