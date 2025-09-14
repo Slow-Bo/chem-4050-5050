@@ -1,7 +1,6 @@
 #Importing all the cool functions I couldn't code myself
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.optimize as opt
 from scipy.integrate import trapezoid
 import pandas as pd
 
@@ -143,6 +142,21 @@ plt.ylabel('Second virial coefficient')
 plt.legend()
 plt.title('The second viral coeffeicent using different functions to calculate potental energy')
 plt.show()
+
+#Will make the file requested
+def file_creator():
+    #Gets the arrays of information and puts them in an array to be dataframed
+    B2Vs = [x,yhs,ysw,ylj]
+    
+    #Converts the data to a Pandas Dataframe
+    df = pd.DataFrame(B2Vs, index=['Temperature', 'Hard Shell Potential', 'Square Well Potential', 'Lannard Jones Potential'])
+    
+    #Makes the file
+    df.to_csv('./homework-2-2/B2VoverTemp.csv', sep=',',index=True, columns= None, header= False)
+    #Prints the Panda Dataframe so I can see I put it together right
+    print(df)
+
+file_creator()
 
 """The first thing to notice is that the second viral coeffeicent for the Square Well and Hard Sphere potentials were much more simmilar
 than the lennard jones function. This makes sense as outside of the titular square well they have the same value. 
