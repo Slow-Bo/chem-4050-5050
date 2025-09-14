@@ -25,44 +25,51 @@ def lennard_jones(r, epsilon = Epsilon, sigma = Sigma):
 #Another function for hard sphere potential
 def Hard_Sphere(r):
     #The trapazoid function runs an array through the functions to be intigrated so this is to allow for that
-    if r == float:
+    if isinstance(r, np.ndarray):  
+        #Sees where each number in the array would fall in the hard sphere argument and appends the output accordingly
+        for n in r:
+            #This is needed to target each number in the array, enumerate would be better, but I know how to use this
+            #So long as the same n value dosn't appear twice (Which it shouldn't) it will work fine
+            Counter = np.where(r == n)
+            #Modifys each number in the array to be what it needs to be since transfering the modified numbers to a new array dosn't work
+            if n < Sigma:
+                r[Counter] = 1000
+            else:
+                r[Counter] = 0
+        return r
+    else:
         #Just sees where the number would fall in the hard sphere argument
         if r < Sigma:
-            return np.inf
+            return 1000
         else:
             return 0
-    else:
-        #Sees where each number in the array would fall in the hard sphere argument and appends the output accordingly
-        Output = []
-        for n in r:
-            if n < Sigma:
-                Output.append(np.inf)
-            else:
-                Output.append(0)
-        return Output
 
 #One more function for square well potential
 def Square_well(r):
     #The trapazoid function runs an array through the functions to be intigrated so this is to allow for that
-    if r == float:
-        #Just sees where the number would fall in the square well potential argument
+    if isinstance(r, np.ndarray):
+        for n in r:
+            #This is needed to target each number in the array, enumerate would be better, but I know how to use this
+            #So long as the same n value dosn't appear twice (Which it shouldn't) it will work fine
+            Counter = np.where(r == n)
+            #Modifys each number in the array to be what it needs to be since transfering the modified numbers to a new array dosn't work
+            if n < Sigma:
+                r[Counter] = 1000
+            elif Sigma <= n < WellRange * Sigma:
+                r[Counter] = -Epsilon
+            else:
+                r[Counter] = 0
+        return r
+    else:
+        #Sees where each number in the array would fall in the square well potential argument and appends the output accordingly
+        
+            #Just sees where the number would fall in the square well potential argument
         if r < Sigma:
             return np.inf
         elif Sigma <= r < WellRange * Sigma:
             return -Epsilon
         else:
             return 0
-    else:
-        #Sees where each number in the array would fall in the square well potential argument and appends the output accordingly
-        Output = []
-        for n in r:
-            if n < Sigma:
-                Output.append(np.inf)
-            elif Sigma <= n < WellRange * Sigma:
-                Output.append(-Epsilon)
-            else:
-                Output.append(0)
-        return Output
         
 
 #The function to be intigrated takes two inputs f (a function for potental) and r (distance between two atoms)
@@ -102,6 +109,9 @@ def bind_arguments(func, *args, **kwargs):
 #Also heres my source because citation is important https://www.geeksforgeeks.org/python/how-to-bind-arguments-to-given-values-in-python-functions/
 
 #This function combines the B2V function with one of the potential functions
-B2VHSat100 = bind_arguments(B2V, Hard_Sphere, 100)
-Goal = TheIntagrateInator(B2VHSat100,1/1000, 17.0, 1000)
-print(Goal)
+#B2VHSat100 = bind_arguments(B2V, Square_well, 100)
+
+#This just prints the arguments to see if they work
+#Goal = TheIntagrateInator(B2VHSat100,1/1000, 17.0, 1000)
+#print(Goal)
+
