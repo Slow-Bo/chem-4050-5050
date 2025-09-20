@@ -79,7 +79,7 @@ for a in range(len(df['H_v (joules/mol)'])):
         Color = 'Gold'
 
     #Plots each point, with a color according to its class
-    plt.plot(x,y, marker = '.', color= Color)
+    plt.plot(x,y, marker = 'o', color= Color)
     plt.xlabel('T_B (K)')
     plt.ylabel('H_v (jules/mol)')
     #Sets the legend to the upper right so it's out of the way
