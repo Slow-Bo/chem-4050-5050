@@ -1,19 +1,17 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
-import scipy.optimize as opt
 import scipy.constants as con
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #A function I found online that allows the import of IPYNB files
 import import_ipynb
 
-#imports the system and the rules for json files
-import sys
+#imports the rules for json files
 import json
 
 #Pulls the notebook from where I placed it so that we can call upon it
-sys.path.append('./Data')
-notebook = import_ipynb.find_notebook('lecture-07-regression')
+notebook = import_ipynb.find_notebook('Data/lecture-07-regression')
 
 #reads the file as a json file and puts each cell into an array cells
 file = open(notebook).read()
@@ -59,3 +57,31 @@ print(df)
 #Calculates the slope and interecept using the defined functions
 slope, intercept = ols(df['T_B (K)'],df['H_v (joules/mol)'])
 
+#A list of colors for the datapoints
+Colors = ['blue','red','purple','gold']
+
+#Runns a for loop for every value in H_V joules/mol
+for a in range(len(df['H_v (joules/mol)'])):
+    
+    #Gets the x and y from the pd datafarme
+    x = df.loc[a, 'T_B (K)']
+    y = df.loc[a, 'H_v (joules/mol)']
+    #Decides which color the point should be based of the Class
+    Color = str
+    Class = df.loc[a, 'Class']
+    if Class == 'Perfect liquids':
+        Color = 'blue'
+    elif Class == 'Imperfect liquids':
+        Color = 'red'
+    elif Class == 'Liquids subject to quantum effects':
+        Color = 'purple'
+    else:
+        Color = 'Gold'
+
+    #Plots each point, with a color according to its class
+    plt.plot(x,y, marker = '.', color= Color)
+    plt.xlabel('T_B (K)')
+    plt.ylabel('H_v (jules/mol)')
+    #Sets the legend to the upper right so it's out of the way
+plt.legend().set_loc('upper right')
+plt.show()
