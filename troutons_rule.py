@@ -3,3 +3,8 @@ import numpy as np
 import scipy.optimize as opt
 import scipy.constants as con
 import pandas as pd
+
+#A function I found online that allows the import of IPYNB files
+import import_ipynb
+notebook = import_ipynb.find_notebook("lecture-07-regression")
+print(notebook)
