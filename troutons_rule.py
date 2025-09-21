@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 
 
+
 #imports the rules for json files
 import json
 
@@ -142,5 +143,13 @@ for a in range(len(df['H_v (joules/mol)'])):
 plt.legend().set_loc('upper left')
 #Titles the graph Trouton's Rule
 plt.title("Trouton’s Rule")
+
+#Saves the graph and shows it to ensure accuracy, the arguments bbox_inches and pad_inches ensures that both axis titles are legible
+plt.savefig('homework-3-1/Trouton.png', bbox_inches= 'tight', pad_inches= 0.2)
 plt.show()
-plt.savefig('homework-3-1/Trouton.png')
+
+#comments on Trouton's Rule
+'''It seems as though Trouton's predicted slope of ~88J/mol was inacurrate according to my data, as such a value would fall outside the confidance interval. However, seeing as the metals were pretty
+far off the line, and that, based of helium's enthylpy of evaporation, we should start with an intercept closer or at 0, which would mean the slope would be less and closer to the predicted value. That
+does not change the fact that the rule dosn't account for metals, so I will say that Trouton's rule is inaccurate based of the presented data. I could see if it would be better without the metals data,
+but I have more important things to do.'''
