@@ -4,15 +4,12 @@ import scipy.constants as con
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#A function I found online that allows the import of IPYNB files
-import import_ipynb
 
 #imports the rules for json files
 import json
 
 #Pulls the notebook from where I placed it so that we can call upon it
-notebook = import_ipynb.find_notebook('Data/lecture-07-regression')
-
+notebook = 'Data/lecture-07-regression.ipynb'
 #reads the file as a json file and puts each cell into an array cells
 file = open(notebook).read()
 cells = json.loads(file)
@@ -52,36 +49,57 @@ df['H_v (kcal/mol)'] = df['H_v (kcal/mol)'].apply(lambda x: x * con.calorie * 10
 df.rename(columns={'H_v (kcal/mol)': 'H_v (joules/mol)'}, inplace=True)
 
 #A Print Function for testing
-print(df)
+#print(df)
 
 #Calculates the slope and interecept using the defined functions
 slope, intercept = ols(df['T_B (K)'],df['H_v (joules/mol)'])
+print(slope, intercept)
 
-#A list of colors for the datapoints
-Colors = ['blue','red','purple','gold']
 
-#Runns a for loop for every value in H_V joules/mol
+#Creates 100 points from 1 to 2500
+X = np.linspace(1,2500,100)
+#Graphs the calculated slope intercept line
+plt.plot(X,X * slope + intercept, linestyle = '-', color= 'black', label= "H_v=" + str(round(slope,2)) + '(J/mol)' + str(round(intercept / 1000,2)) + '(kJ/mol)')
+
+#An array for the for loop to keep track of what classes have been labled
+LabledClasses = []
+#Runs a for loop for every value in H_V joules/mol
 for a in range(len(df['H_v (joules/mol)'])):
     
     #Gets the x and y from the pd datafarme
     x = df.loc[a, 'T_B (K)']
     y = df.loc[a, 'H_v (joules/mol)']
+    
     #Decides which color the point should be based of the Class
     Color = str
+    Marker = str
     Class = df.loc[a, 'Class']
     if Class == 'Perfect liquids':
         Color = 'blue'
+        Marker = 'Perfect liquids'
     elif Class == 'Imperfect liquids':
         Color = 'red'
+        Marker = 'Imperfect liquids'
     elif Class == 'Liquids subject to quantum effects':
         Color = 'purple'
+        Marker = 'Liquids subject to quantum effects'
     else:
         Color = 'Gold'
-
-    #Plots each point, with a color according to its class
-    plt.plot(x,y, marker = 'o', color= Color)
+        Marker = 'Metals'
+    #Checks to see if the class has already been labled
+    if Marker in LabledClasses:
+        #Plots each point, with a color according to its class, but does not add a label
+        plt.plot(x,y, marker = 'o', color= Color)
+    else:
+        #Plots each point, with a color according to its class
+        plt.plot(x,y, marker = 'o', color= Color, label= Marker)
+        #Adds the Marker to Labeled Classes so classes aren't labled twice
+        LabledClasses.append(Marker)
     plt.xlabel('T_B (K)')
-    plt.ylabel('H_v (jules/mol)')
-    #Sets the legend to the upper right so it's out of the way
-plt.legend().set_loc('upper right')
-plt.show()
+    plt.ylabel('H_v (joules/mol)')
+
+#Sets the legend to the upper left so it's out of the way
+plt.legend().set_loc('upper left')
+#Titles the graph Trouton's Rule
+plt.title("Trouton’s Rule")
+#plt.show()
