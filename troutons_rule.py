@@ -1,8 +1,10 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
 import scipy.constants as con
+from scipy.stats import t
 import pandas as pd
 import matplotlib.pyplot as plt
+
 
 
 #imports the rules for json files
@@ -38,6 +40,40 @@ executeCell(codeCells[4])
 #I spent 3 hours reaserching nothing but this and this was the only solution I came accross that remotly works
 #Here is my source https://www.youtube.com/watch?v=-2Q5ikJbZVU
 
+#Calculates the confidence intervals
+def Confidence(x_values, y_values, slope, intercept, confidence = 0.95):
+    """
+    Computes the confidence interval for a set of values and their predicted values.
+
+    Parameters:
+    x_values (array): The points of data for the independant variable.
+    y_values (array): The points of data for the dependant variable.
+    slope (float): The calculated slope of the regression line.
+    intercept (float): The calculated intercept of the regression line.
+    confidence (float > 1): The desired confidence interval.
+
+    Returns:
+    float: The confidance interval for the slope
+    float: The confidance interval for the intercept
+    """
+    #Creates our variables we will need for later
+    Freedom = (len(y_values)-2)
+    alpha = 1 - confidence
+    critical_t_value = t.ppf(1 - alpha/2, Freedom)
+    mean = np.mean(x_values)
+    #calculates Standard Square Error
+    SSR = sum((y_values - (x_values*slope+intercept))**2)
+    #I remember you, the math, Variance
+    VAR = SSR/Freedom
+    
+    #calculates the standard Error for both slope and intercept
+    SESlope = np.sqrt(VAR/(sum((x_values-mean)**2)))
+    SEIntercept = np.sqrt(VAR*(1/len(y_values)+(mean**2/sum((x_values-mean)**2))))
+
+    #Retuns the confindence interval for both values
+    return SESlope * critical_t_value, SEIntercept * critical_t_value
+
+
 #Defines deltaSV
 DeltaSV = con.R * 10.5
 
@@ -51,15 +87,19 @@ df.rename(columns={'H_v (kcal/mol)': 'H_v (joules/mol)'}, inplace=True)
 #A Print Function for testing
 #print(df)
 
-#Calculates the slope and interecept using the defined functions
+#Calculates the slope and interecept using the defined functions. I know it gives you a warning, but it works
 slope, intercept = ols(df['T_B (K)'],df['H_v (joules/mol)'])
-print(slope, intercept)
+#Calculates the confidence intervals for the slope and intercept at 95% Confidence interval
+CIS, CII = Confidence(df['T_B (K)'],df['H_v (joules/mol)'],slope,intercept,0.95)
+
+#A print for testing
+print(CIS, CII)
 
 
 #Creates 100 points from 1 to 2500
 X = np.linspace(1,2500,100)
 #Graphs the calculated slope intercept line
-plt.plot(X,X * slope + intercept, linestyle = '-', color= 'black', label= "H_v=" + str(round(slope,2)) + '(J/mol)' + str(round(intercept / 1000,2)) + '(kJ/mol)')
+plt.plot(X,X * slope + intercept, linestyle = '-', color= 'black', label= f"H_v = {slope:.3f} +/- {CIS:.3f}(J/mol) + {intercept/1000:.3f} +/- {CII/1000:.3f}(kJ/mol)")
 
 #An array for the for loop to keep track of what classes have been labled
 LabledClasses = []
@@ -102,4 +142,5 @@ for a in range(len(df['H_v (joules/mol)'])):
 plt.legend().set_loc('upper left')
 #Titles the graph Trouton's Rule
 plt.title("Trouton’s Rule")
-#plt.show()
+plt.show()
+plt.savefig('homework-3-1/Trouton.png')
