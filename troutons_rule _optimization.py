@@ -1,45 +1,17 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
 import scipy.constants as con
+import scipy.optimize as opt
 from scipy.stats import t
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
+#Removed all the garbage code held together with hopes and dreams
 
-
-#imports the rules for json files
-import json
-
-#Pulls the notebook from where I placed it so that we can call upon it
-notebook = 'Data/lecture-07-regression.ipynb'
-#reads the file as a json file and puts each cell into an array cells
-file = open(notebook).read()
-cells = json.loads(file)
-cells = cells["cells"]
-
-codeCells = []
-
-#Sorts through the cells and adds any code cells to an array codeCells
-for i in cells:
-    if i["cell_type"] == "code":
-        code = ""
-        for j in i["source"]:
-            code += j
-        codeCells.append(code)
-
-#Executes the code cells globally so I can call the functions within from anywhere in the python file
-def executeCell(cell_code):
-    exec(cell_code, globals())
-
-#These are the code cells corosponding to ols_slope, ols_intercept, and ols respectivly
-executeCell(codeCells[2])
-executeCell(codeCells[3])
-executeCell(codeCells[4])
-
-#This is a terrable way to do this, the code is not even really imported as much as it is pulled straight from the heart of the .ipynb file and shoved into the globals of this file
-#I spent 3 hours reaserching nothing but this and this was the only solution I came accross that remotly works
-#Here is my source https://www.youtube.com/watch?v=-2Q5ikJbZVU
+#The function to be optimized by SciPy, contains the H_v value (y), the T_B value (x), the slope (a), and the intercept (b)
+def True_Optimization(a,b,x,y):
+    return sum((y-(x*a+b))^2)
 
 #Calculates the confidence intervals
 def Confidence(x_values, y_values, slope, intercept, confidence = 0.95):
@@ -85,13 +57,13 @@ df = pd.read_csv('Data/trouton.csv')
 df['H_v (kcal/mol)'] = df['H_v (kcal/mol)'].apply(lambda x: x * con.calorie * 1000)
 df.rename(columns={'H_v (kcal/mol)': 'H_v (joules/mol)'}, inplace=True)
 
-#A Print Function for testing
-#print(df)
+T_BValues = df['T_B (K)']
+H_VValues = df['H_v (joules/mol)']
 
 #Calculates the slope and interecept using the defined functions. I know it gives you a warning, but it works
-slope, intercept = ols(df['T_B (K)'],df['H_v (joules/mol)'])
+slope, intercept = 1,2
 #Calculates the confidence intervals for the slope and intercept at 95% Confidence interval
-CIS, CII = Confidence(df['T_B (K)'],df['H_v (joules/mol)'],slope,intercept,0.95)
+CIS, CII = Confidence(T_BValues,H_VValues,slope,intercept,0.95)
 
 #A print for testing
 print(CIS, CII)
@@ -105,11 +77,11 @@ plt.plot(X,X * slope + intercept, linestyle = '-', color= 'black', label= f"H_v 
 #An array for the for loop to keep track of what classes have been labled
 LabledClasses = []
 #Runs a for loop for every value in H_V joules/mol
-for a in range(len(df['H_v (joules/mol)'])):
+for a in range(len(H_VValues)):
     
     #Gets the x and y from the pd datafarme
-    x = df.loc[a, 'T_B (K)']
-    y = df.loc[a, 'H_v (joules/mol)']
+    x = T_BValues[a]
+    y = H_VValues[a]
     
     #Decides which color the point should be based of the Class
     Color = str
@@ -145,7 +117,7 @@ plt.legend().set_loc('upper left')
 plt.title("Trouton’s Rule")
 
 #Saves the graph and shows it to ensure accuracy, the arguments bbox_inches and pad_inches ensures that both axis titles are legible
-plt.savefig('homework-3-1/Trouton.png', bbox_inches= 'tight', pad_inches= 0.2)
+plt.savefig('homework-3-2/Trouton.png', bbox_inches= 'tight', pad_inches= 0.2)
 plt.show()
 
 #comments on Trouton's Rule
