@@ -6,6 +6,9 @@ from scipy.stats import t
 import pandas as pd
 import matplotlib.pyplot as plt
 
+#Added this import so file finding works better
+import os
+Path = os.getcwd()
 
 #Removed all the garbage code held together with hopes and dreams
 
