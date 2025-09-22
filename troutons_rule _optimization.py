@@ -6,9 +6,11 @@ from scipy.stats import t
 import pandas as pd
 import matplotlib.pyplot as plt
 
-#Added this import so file finding works better
+#Added this import so file finding works better it turns out that depending on how I boot up VS code it changes the directory to whatever it feels like,
+#This holds a gun to VS Code's head and forces it to take the directory I want, though admitildy microsoft's stupid CoPilot AI immediatly told me the answer when I tried to look it up
 import os
-Path = os.getcwd()
+path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(path)
 
 #Removed all the garbage code held together with hopes and dreams
 
