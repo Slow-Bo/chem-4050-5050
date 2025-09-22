@@ -15,9 +15,24 @@ os.chdir(path)
 #Removed all the garbage code held together with hopes and dreams
 
 #The function to be optimized by SciPy, contains the H_v value (y), the T_B value (x), the slope (a), and the intercept (b)
-def True_Optimization(a,b,x,y):
-    return sum((y-(x*a+b))^2)
+def Square_Error(a= float,b= float,x= [],y= []):
+    Error = sum((y-(x*a+b))**2)
+    return Error
 
+#This function will actualy call SciPy optimize and retern the optimal slope
+#Contains the x values (x), the y values (y), the inital slope guess (a0), and the inital intercept guess (b0)
+def Slope_Optimizer(X,Y,a0,b0):
+    
+    #This is the way you are supposed to pass arguments through functions with optimize, I should have read the SciPy docs last week
+    fun=lambda x=[] : Square_Error(x[0], x[1], X, Y)
+    
+    #Runs the optimize function and retrives the optimal slope and intercept
+    Rawdata = opt.minimize(
+        fun, #The function to be optimized
+        x0= [a0,b0], #The inital guesses
+        method= 'Nelder-Mead' #The only method I know for real
+        )["x"] #Only returns the optimal value
+    return Rawdata[0], Rawdata[1] #returns the slope and intercept
 #Calculates the confidence intervals
 def Confidence(x_values, y_values, slope, intercept, confidence = 0.95):
     """
@@ -65,8 +80,10 @@ df.rename(columns={'H_v (kcal/mol)': 'H_v (joules/mol)'}, inplace=True)
 T_BValues = df['T_B (K)']
 H_VValues = df['H_v (joules/mol)']
 
-#Calculates the slope and interecept using the defined functions. I know it gives you a warning, but it works
-slope, intercept = 1,2
+
+
+#Calculates the slope and interecept using the optimizer function with 10.5 * R and 0 as the inital guesses
+slope, intercept = Slope_Optimizer(T_BValues,H_VValues,con.R * 10.5, 0)
 #Calculates the confidence intervals for the slope and intercept at 95% Confidence interval
 CIS, CII = Confidence(T_BValues,H_VValues,slope,intercept,0.95)
 
