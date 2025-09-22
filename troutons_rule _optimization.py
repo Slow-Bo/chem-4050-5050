@@ -136,14 +136,17 @@ for a in range(len(H_VValues)):
 #Sets the legend to the upper left so it's out of the way
 plt.legend().set_loc('upper left')
 #Titles the graph Trouton's Rule
-plt.title("Trouton’s Rule")
+plt.title("Trouton’s Rule Optimization")
 
 #Saves the graph and shows it to ensure accuracy, the arguments bbox_inches and pad_inches ensures that both axis titles are legible
 plt.savefig('homework-3-2/Trouton.png', bbox_inches= 'tight', pad_inches= 0.2)
 plt.show()
 
-#comments on Trouton's Rule
-'''It seems as though Trouton's predicted slope of ~88J/mol was inacurrate according to my data, as such a value would fall outside the confidance interval. However, seeing as the metals were pretty
-far off the line, and that, based of helium's enthylpy of evaporation, we should start with an intercept closer or at 0, which would mean the slope would be less and closer to the predicted value. That
-does not change the fact that the rule dosn't account for metals, so I will say that Trouton's rule is inaccurate based of the presented data. I could see if it would be better without the metals data,
-but I have more important things to do.'''
+#comments on optimization versus the linear regression equation
+'''The difference between the optimization method and the linear regression equation graphs is that there is no difference. They're the same graph. I think the main reson for this
+is that the linear regression equation was derived to find the least squares with just one equation. This means that the least squares method is more optimal for your computer
+since it just needs to plug in the numbers once to get the disired value. The optimization method simply brute forces the equation untill it reaches a local/global minima.
+However the main advantage to optimization is that you can just optimize any equation, but if you wanted to find the minimum value of any equation but the least squares value
+than you would need to derive that equation, assuming it can be derived, and find where the derivitive is 0, then determine if it is the global minimum. That is a lot of work.
+In conclusion I think for a linear equation just using the linear regression equation is better because it exists and already finds the least squares line with very little effort,
+but if you had an equation you didn't have the equivlent of the linear regression equation for optimization would be optimal.'''
