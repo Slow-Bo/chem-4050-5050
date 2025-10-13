@@ -4,6 +4,11 @@ import scipy.constants as con
 from scipy import integrate as int
 import pandas as pd
 
+#Setting the directory to our file so the CSVs output in the disired spot
+#Dang I must have been really frustrated when microsoft's stupid CoPilot AI immediatly told me the answer when I tried to look it up
+import os
+path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(path)
 
 #Defining my values
 R = con.R
