@@ -1,0 +1,62 @@
+#Imports all the functions I can't code as well as a few constants
+import numpy as np
+import scipy.constants as con
+from scipy import integrate as int
+import pandas as pd
+
+
+#Defining my values
+R = con.R
+n = 1
+T = 300
+V_init = 0.1
+Vf = np.linspace(V_init, 3 * V_init, 50)
+
+#Defining a function that calculates pressure using the ideal gas law PV=nRT
+def Ideal_Gas_Law(V,n,R,T):
+    P = (n*R*T)/V
+    return P
+
+
+#Defining an equation to calculate work isothermicly
+def work_calculator_iso(Vi,Vf,n,R,T,N):
+    """
+    Calculates the work done ON an ideal gas assuming a system is isothermic
+    parameters:
+    Vi: initial Volume
+    Vf: final Voulme,
+    n = # of mols
+    R = Ideal gas constant in J/K*mols
+    T = Temperature in Kelvin
+    N = number of desired steps
+    outputs: 
+    w = Work done on the ideal gas
+    """
+    #Calulates the 1D length of the integral
+    grid_range = (Vf-Vi)
+    #Creates the x and y values and calculate step size
+    x = np.linspace(Vi, Vf, N)
+    y = Ideal_Gas_Law(x,n,R,T)
+    dx = grid_range / N
+    #calculates the integrals using the defined values and saves it as work
+    w = -int.trapezoid(y,x,dx)
+    return w
+
+#A print for testing
+print(work_calculator_iso(V_init,3*V_init,n,R,T,1000))
+
+#Calculates the work done at every final volume
+work_done = []
+#Uses a for loop to ensure theres no wonkyness and it puts one VF in at a time
+for v in range(len(Vf)):
+    work_done.append(work_calculator_iso(V_init,Vf[v],n,R,T,1000))
+
+
+#Puts the work done as a function of V final into a Pandas dataframe
+data = {'Final Volume (m^3)' : Vf, 'Work Done to Gas (J)' : work_done}
+df = pd.DataFrame(data)
+
+#another testing print
+print(df)
+
+df.to_csv('isothermic-work.csv', index= False)
