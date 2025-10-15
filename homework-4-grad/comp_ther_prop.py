@@ -34,6 +34,17 @@ def partition_core(T,x):
     Result = np.e**(-((1 / (k_B * T))*lennard_jones(np.sqrt(x))))
     return Result
 
+def Internal_Energy(Z,T):
+    #Calculates the internal energy using an np gradient
+    U = -np.gradient(np.log(Z), 1 / (k_B * T))
+    return U
+
+def Heat_Capcaity(U, T):
+    #Calculates the heat capacity using an np gradient
+    Cv = np.gradient(U, T)
+    return Cv
+
+
 def partician_integral_trapezoid(T, N=20, grid_range=10):
     """
     Computes the partician function of two particles in a box.
@@ -84,19 +95,24 @@ def partician_integral_trapezoid(T, N=20, grid_range=10):
 #Creating a linespace to calculate U and Cv over creating 100 points will put my PC to it's maximum limits
 T = np.linspace(Tmin,Tmax, 100)
 
-#Collecting the values of Z from the functions above
+#Calculating U and Cv using the functions above
 Z = []
 #numbers have to be fed into the partition function one at a time because of how I coded it
 for i in T:
     Z.append(partician_integral_trapezoid(i))
+U = Internal_Energy(Z,T)
+Cv = Heat_Capcaity(U,T)
 
-#Creating a Pandas Dataframe to compile the results
+#A Print for testing
+print(U)
+print(Cv)
+
 data = {'Temperature' : T, 
-        'Partition Function' : Z}
+        'Internal Energy' : U, 
+        'Heat Capacity' : Cv}
 df = pd.DataFrame(data)
 
 #another testing print
 print(df)
 
-#Sending the results to a CV
-df.to_csv('Partition_Function_Vs_Temp.csv', index= False)
+df.to_csv('Heat_Capcaity_Calculations.csv', index= False)

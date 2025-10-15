@@ -18,14 +18,14 @@ Heat_Capacity = df['Heat Capacity']
 #prepares to plot two subplots, the way the matplotlib docs told me to
 fig, ax1 = plt.subplots()
 # Plot units for U on the left y-axis
-ax1.plot(Temperature, Internal_Energy, linestyle = '-', label='Internal Energy (U)')
+ax1.plot(Temperature, Internal_Energy, linestyle = '-', label='Internal Energy (U)', color= 'red')
 ax1.set_xlabel('Temperature (K)')
 ax1.set_ylabel('Internal Energy (eV)', color='red')
 ax1.tick_params(axis='y', labelcolor='red')
 
 #Create a second y-axis for the Heat capacity
 ax2 = ax1.twinx()
-ax2.plot(Temperature, Heat_Capacity, linestyle = '-', label='Heat Capacity (Cv)')
+ax2.plot(Temperature, Heat_Capacity, linestyle = '-', label='Heat Capacity (Cv)', color= 'blue')
 ax2.set_ylabel('Heat Capacity (eV/K)', color='blue')
 ax2.tick_params(axis='y', labelcolor='blue')
 
