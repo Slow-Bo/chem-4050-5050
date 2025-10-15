@@ -63,7 +63,7 @@ def partician_integral_trapezoid(T, N=20, grid_range=10):
     #claculates the thermal wave value for argon at temp
     therm_wav = np.sqrt((1 / (k_B * T))*h**2/(2*np.pi*m))
 
-    #creates a 6d meshgrid of our x, y, and z values. This works, but I know there is a better way to do this.
+    #creates a 6d meshgrid of our x, y, and z values. This works, but I know there is a better way to do this. That dosn't fry my hard-drive.
     X1, Y1, Z1, X2, Y2, Z2 = np.meshgrid(x, x, x, x, x, x, indexing='ij')
     #calculates the radius
     r = np.sqrt((X2-X1)**2+(Y2-Y1)**2+(Z2-Z1)**2)
@@ -92,7 +92,7 @@ def partician_integral_trapezoid(T, N=20, grid_range=10):
 #A Print for Testing
 #print(partician_integral_trapezoid(10))
 
-#Creating a linespace to calculate U and Cv over
+#Creating a linespace to calculate U and Cv over creating 100 points will put my PC to it's maximum limits
 T = np.linspace(Tmin,Tmax, 100)
 
 #Calculating U and Cv using the functions above
