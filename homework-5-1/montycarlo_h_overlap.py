@@ -108,9 +108,9 @@ def Better_Overlap(R,L,seed,n_point):
     denominator = trapezoid.pdf(x,c,d,loc=0, scale=L) * trapezoid.pdf(y,c,d,loc=0, scale=L) * trapezoid.pdf(z,c,d,loc=0, scale=L)
     norm_integ = integrand/denominator
     #Takes the integrand, multiplies it by the integration range cubed so it is a volume, then by 8 since it's semetrical on all axies
-    integral = 8 * np.mean(norm_integ) * (b - a)**3
+    integral = 8 * np.mean(norm_integ)
     #The same as before but for variance
-    variance = 8 * np.var(norm_integ) * (b - a)**3
+    variance = 8 * np.var(norm_integ)
 
     #Returns the average and standard deviation
     return integral, np.sqrt(variance)
