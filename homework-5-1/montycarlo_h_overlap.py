@@ -1,8 +1,8 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
 import matplotlib.pyplot as plt
-#It turns out Scipy has no PERT import, not that it matters, PERT is a special Beta distribution
-from scipy.stats import beta
+#Importing the exponentnal function since beta did not work.
+from scipy.stats import expon
 
 #Setting the directory to our file so I can find the rest of my code, and so I save the graphs to the disired spot
 #Dang I must have been really frustrated when microsoft's stupid CoPilot AI told me how to do this
@@ -70,10 +70,10 @@ def importance_vision():
         plt.show()
 
 #Running the vison function
-importance_vision()
+#importance_vision()
 
 #Interestingly the function tends to peak around 2.5, is negitive around 0 and flatlines at 0 past 10 I need a function of similar shape
-#I have found a distribution I beileve will work for this. The PERT distribution. I am writing the import from scipy now.
+#I have found a distribution I beileve will work for this. The beta distribution, but the exponental distribution is close enough.
 
 #A function to calculate the monty carlo overlap, because all the variables are defined outside, I can just copy and paste.
 def Better_Overlap(R,L,seed,n_point):
@@ -87,9 +87,12 @@ def Better_Overlap(R,L,seed,n_point):
 
     #Creates a random array of X,Y, and Z points from the bounds 0 to L
     #If I did this right it should follow the beta distribution and be more acurate
-    x = beta.rvs(a,b, size=n_point, scale=1)
-    y = beta.rvs(a,b, size=n_point, scale=1)
-    z = beta.rvs(a,b, size=n_point, scale=1)
+    
+    #It did not in fact work, as it turns out beta has 0 outside of its domain a lesser man would give up and use the exponental function since it should be close enough.
+    #I am a lesser man.
+    x = expon.rvs(size=n_point, scale=1)
+    y = expon.rvs(size=n_point, scale=1)
+    z = expon.rvs(size=n_point, scale=1)
 
     #Defines the integrand as the wave function squared as is how probability density is defined.
     #Thank god there are no imaginary numbers here, since otherwise I would throw my laptop into a lake.
@@ -102,3 +105,4 @@ def Better_Overlap(R,L,seed,n_point):
 
     #Returns the average and standard deviation
     return integral, np.sqrt(variance)
+
