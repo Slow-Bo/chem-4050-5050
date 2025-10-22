@@ -138,5 +138,5 @@ def better_monty_carlo_ken(L, n_point, R=[0,0,0]):
     return integral, np.sqrt(variance)'''
 
 #A print for testing
-#print(monty_carlo_ken(7,10**7))
+print(monty_carlo_ken(7,10**7, [0,0,1.4]))
 #print(better_monty_carlo_ken(7,10**7))
