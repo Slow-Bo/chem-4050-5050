@@ -26,8 +26,8 @@ def monty_carlo_ken(L,N,R=[0,0,0]):
     #Set the random seed for reproducibility
     np.random.seed(seed)
 
-    #Sets the integraton limits from 0 to L since the orbital should be semetrical on all axises? axii? Plural of axis!
-    a = 0
+    #Sets the integraton limits from -L to L since although the orbital is semetrical for the diagonal, it isn't for the off diagonal.
+    a = -L
     b = L
 
     #Creates a random array of X,Y, and Z points from the bounds 0 to L
@@ -38,9 +38,9 @@ def monty_carlo_ken(L,N,R=[0,0,0]):
     #Defines the integrand as the kenetic function how it is defined in the homework
     integrand = psi_1s(x + R[0]/2,y + R[1]/2 ,z + R[2]/2) * (-1/2 * laplacian_psi_1s(x - R[0]/2 ,y - R[1]/2, z - R[2]/2))
     #Takes the integrand, multiplies it by the integration range cubed so it is a volume, then by 8 since it's semetrical on all axies according to the importance vision
-    integral = 8 * np.mean(integrand) * (b - a)**3
+    integral = np.mean(integrand) * (b - a)**3
     #The same as before but for variance
-    variance = 8 * np.var(integrand) * (b - a)**3
+    variance = np.var(integrand) * (b - a)**3
 
     #Returns the average and standard deviation
     return integral, np.sqrt(variance)
@@ -77,8 +77,8 @@ def better_monty_carlo_ken(L, n_point, R=[0,0,0]):
     #Set the random seed for reproducibility
     np.random.seed(seed)
 
-    #Seting the bounds of integration
-    a = 0
+    #Sets the integraton limits from -L to L since although the orbital is semetrical for the diagonal, it isn't for the off diagonal.
+    a = -L
     b = L
     #A single variable to adjust the scale of the exponetntial to match the function best
     S = 3
@@ -95,9 +95,9 @@ def better_monty_carlo_ken(L, n_point, R=[0,0,0]):
     denominator = expon.pdf(x,scale=S) * expon.pdf(y,scale=S) * expon.pdf(z,scale=S)
     norm_integ = integrand/denominator
     #Takes the integrand, multiplies it by the integration range cubed so it is a volume, then by 8 since it's semetrical on all axies
-    integral = 8 * np.mean(norm_integ)
+    integral = np.mean(norm_integ)
     #The same as before but for variance
-    variance = 8 * np.var(norm_integ)
+    variance = np.var(norm_integ)
 
     #Returns the average and standard deviation
     return integral, np.sqrt(variance)
