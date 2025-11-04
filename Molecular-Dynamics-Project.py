@@ -148,11 +148,11 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
         new_grid[Chosen_X][Chosen_Y] = 0
         NewE = energy_calculator(grid, neighbors, parameters)
         if grid[Chosen_X][Chosen_Y] == 'N':
-            if Empt_Sites - H_Sites + 1 == 0:
+            if Empt_Sites - N_Sites + 1 == 0:
                 Denom = 1E-30
             else:
-                Denom = Empt_Sites - H_Sites + 1
-            Acc = min(1, H_Sites/Denom * np.exp(-beta * ((NewE - OldE) + N_Pot)))
+                Denom = Empt_Sites - N_Sites + 1
+            Acc = min(1, N_Sites/Denom * np.exp(-beta * ((NewE - OldE) + N_Pot)))
             if np.random.rand() <= Acc:
                 grid = new_grid
                 N_Sites -= 1
