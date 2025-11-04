@@ -1,12 +1,12 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
-from scipy.constants import k, eV
+
 import matplotlib.pyplot as plt
 
 #The variables to run throught all my functions
 sizeX = 4
 sizeY = 4
-k_b = k/eV
+
 #Some filler parameters for testing
 Filler_params ={
     'eH': -0.1,
@@ -16,7 +16,7 @@ Filler_params ={
     'eNH': -0.05,
     'mu_N': -0.1,
     'mu_H': -0.1,
-    'T': 298
+    'T': 200
 }
 
 #I couldn't figure out the function to bind a value to a certain range so I made my own
@@ -94,14 +94,18 @@ def gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
     N_Pot = parameters.get('mu_N')
     H_Pot = parameters.get('mu_H')
     OldE = energy_calculator(grid, neighbors, parameters)
-    beta = 1/(parameters.get('T')*k_b)
+    beta = 1/(parameters.get('T'))
     if Empt_Sites == 0:
         return Empt_Sites, N_Sites, H_Sites, grid
     else:
         Valid_Sites = []
         for i, row in enumerate(grid):
             for j, element in enumerate(row):
-                if element == 0 or '0':
+                if element == 0:
+                    Valid_Sites.append((i, j))
+                elif element == '0.0':
+                    Valid_Sites.append((i, j))
+                elif element == '0':
                     Valid_Sites.append((i, j))
         Chosen_Site = np.random.choice(len(Valid_Sites))
         Chosen_X = Valid_Sites[Chosen_Site][0]
@@ -121,7 +125,7 @@ def gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
             new_grid[Chosen_X][Chosen_Y] = 'H'
             NewE = energy_calculator(new_grid, neighbors, parameters)
             Acc = min(1, (Empt_Sites - H_Sites) / (H_Sites + 1) * np.exp(-beta * ((NewE - OldE) - H_Pot)))
-            if np.random.rand() <= Acc:
+            if np.random.rand() < Acc:
                 grid = new_grid
                 H_Sites += 1
                 Empt_Sites -= 1
@@ -132,14 +136,16 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
     N_Pot = parameters.get('mu_N')
     H_Pot = parameters.get('mu_H')
     OldE = energy_calculator(grid, neighbors, parameters)
-    beta = 1/(parameters.get('T')*k_b)
+    beta = 1/(parameters.get('T'))
     if N_Sites + H_Sites == 0:
         return Empt_Sites,N_Sites,H_Sites, grid
     else:
         Valid_Sites = []
         for i, row in enumerate(grid):
             for j, element in enumerate(row):
-                if element == 'N' or 'H':
+                if element == 'N':
+                    Valid_Sites.append((i, j))
+                elif element == 'H':
                     Valid_Sites.append((i, j))
         Chosen_Site = np.random.choice(len(Valid_Sites))
         Chosen_X = Valid_Sites[Chosen_Site][0]
@@ -155,9 +161,9 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
             Acc = min(1, N_Sites/Denom * np.exp(-beta * ((NewE - OldE) + N_Pot)))
             if np.random.rand() <= Acc:
                 grid = new_grid
-                N_Sites -= 1
+                N_Sites += -1
                 Empt_Sites += 1
-        else:
+        elif grid[Chosen_X][Chosen_Y] == 'H':
             if Empt_Sites - H_Sites + 1 == 0:
                 Denom = 1E-30
             else:
@@ -165,10 +171,9 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
             Acc = min(1, H_Sites/Denom * np.exp(-beta * ((NewE - OldE) + H_Pot)))
             if np.random.rand() <= Acc:
                 grid = new_grid
-                H_Sites -= 1
+                H_Sites += -1
                 Empt_Sites += 1
         return Empt_Sites,N_Sites,H_Sites, grid
-
 def grand_cannonical(Steps, sizeX, sizeY, parameters):
     grid, neighbors = create_grid(sizeX, sizeY)
     Total_Sites = sizeX * sizeY
@@ -177,12 +182,15 @@ def grand_cannonical(Steps, sizeX, sizeY, parameters):
     H_Sites = 0
     NCoverage = []
     HCoverage = []
+    
     for i in range(Steps):
         add_or_subtract = np.random.choice(2) > 0.5
         if add_or_subtract == True:
             Empt_Sites, N_Sites, H_Sites, grid = gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites)
+            
         elif add_or_subtract == False:
             Empt_Sites, N_Sites, H_Sites, grid = take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites)
+            
         NCoverage.append(N_Sites/Total_Sites)
         HCoverage.append(H_Sites/Total_Sites)
     return grid, NCoverage, HCoverage
