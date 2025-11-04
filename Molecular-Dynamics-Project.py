@@ -1,11 +1,12 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
+from scipy.constants import k, eV
 import matplotlib.pyplot as plt
 
 #The variables to run throught all my functions
 sizeX = 4
 sizeY = 4
-
+k_b = k/eV
 #Some filler parameters for testing
 Filler_params ={
     'eH': -0.1,
@@ -93,7 +94,7 @@ def gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
     N_Pot = parameters.get('mu_N')
     H_Pot = parameters.get('mu_H')
     OldE = energy_calculator(grid, neighbors, parameters)
-    beta = 1/parameters.get('T')
+    beta = 1/(parameters.get('T')*k_b)
     if Empt_Sites == 0:
         return Empt_Sites, N_Sites, H_Sites, grid
     else:
@@ -131,7 +132,7 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
     N_Pot = parameters.get('mu_N')
     H_Pot = parameters.get('mu_H')
     OldE = energy_calculator(grid, neighbors, parameters)
-    beta = 1/parameters.get('T')
+    beta = 1/(parameters.get('T')*k_b)
     if N_Sites + H_Sites == 0:
         return Empt_Sites,N_Sites,H_Sites, grid
     else:
@@ -151,7 +152,7 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
                 Denom = 1E-30
             else:
                 Denom = Empt_Sites - H_Sites + 1
-            Acc = min(1, H_Sites/Denom * np.exp(-beta * ((NewE - OldE) + H_Pot)))
+            Acc = min(1, H_Sites/Denom * np.exp(-beta * ((NewE - OldE) + N_Pot)))
             if np.random.rand() <= Acc:
                 grid = new_grid
                 N_Sites -= 1
