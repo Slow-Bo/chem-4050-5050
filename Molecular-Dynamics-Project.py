@@ -317,7 +317,138 @@ Test_grid = [['N',0,0,0],
              ['H',0,0,0],
              ['N',0,0,0]
 ]
+#A function that turns all those annoying stings into integers so my code will actually accept them
+def string_ripper(lattice,string1:str,string2:str):
+    #Creates a matrix of the same dimensions as the original, but with only zeros
+    intlattice = np.zeros_like(lattice)
+    #Checks every cell in every row for a valid value
+    for i, row in enumerate(lattice):
+        for j, element in enumerate(row):
+            #Checks if a given cell has one of the two valid strings before swaping them with an integer
+            if element == string1:
+                intlattice[i][j] = 1
+            elif element == string2:
+                intlattice[i][j] = 2
+            else:
+                intlattice[i][j] = 0
+    #returns a metrix of only integers so python will shut up and accept my freaking matrix
+    return intlattice
+
+#A function to plot the latice as a grid
+def plot_lattice(lattice, ax, title, particle1:str, particle2:str):
+
+    #Gets the X and Y size of the lattice
+    gridsizex = len(lattice[0])
+    gridsizey = len(lattice)
+
+    # Create gridlines along the x and y
+    ax.set_xticks(np.arange(0, gridsizex + 1, 1))
+    ax.set_yticks(np.arange(0, gridsizey + 1, 1))
+    #Sets Matplotlib to grid mode
+    ax.grid(True)
+
+    # Set the limits of the plot
+    ax.set_xlim(0, gridsizex)
+    ax.set_ylim(0, gridsizey)
+
+    #Graphs the location of each adsorbant
+    for x in range(gridsizex):
+        for y in range(gridsizey):
+            if lattice[x][y] == 1:
+                ax.plot(x + 0.5, y + 0.5, 'o', color='blue', markersize=15, zorder=10)
+            elif lattice[x][y] == 2:
+                ax.plot(x + 0.5, y + 0.5, 'o', color='red', markersize=15, zorder=10)
+
+    # Add labels for N and H, I found where to put them through trial and error
+    ax.text(2, -0.5, title, ha='center')
+    ax.text(1, 5.2, 'Adsorbed ' + particle1, color='blue', ha='center')
+    ax.text(3.5, 5.2, 'Adsorbed ' + particle2, color='red', ha='center')
+    
+    # Hide ticks
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+    return ax
 
 #Test running the functions, there were more tests sewn throughout, but I got rid of them so I didn't have 1,000,000,000,000 prints
 Grid, Junk1, Junk2 = grand_cannonical(100000,sizeX,sizeY,Filler_params) 
 print(Grid)
+
+#The arrays containing all the test values in the order eH, eN, eHH, eNN, eNH, muN
+Ideal_Mixture = [-0.1,-0.1,0,0,0,-0.1]
+Repulsive_Interactions = [-0.1,-0.1,0.05,0.05,0.05,-0.1]
+Attractive_Interactions = [-0.1,-0.1,-0.05,-0.05,-0.05,-0.1]
+Immisible_HN = [-0.1,-0.1,-0.05,-0.05,0.05,-0.1]
+Like_Disolves_Unlike = [-0.1,-0.1,0.05,0.05,-0.05,-0.1]
+#Puts all the arrays into a bigger array so I cn run them all at once
+The_Big_Kahuna = [Ideal_Mixture,Repulsive_Interactions,Attractive_Interactions,Immisible_HN,Like_Disolves_Unlike]
+#These are the basic values we will be testing, they should remain the same in all simulations
+n_steps = 10000
+mus_H = np.linspace(-0.2, 0, 7)
+Ts = np.linspace(1, 201, 7)
+#Runs through each array and prepares it for the Grand cannonical
+for array in The_Big_Kahuna:
+    params = []
+    for mu_H in mus_H:
+        for T in Ts:
+            params.append({
+                #Turns our arrays into a dictionary that can be fed into the grand cannoncial, I know it's a bit of a magic numbers solution, which is bad, but it does work.
+                'eH': array[0],
+                'eN': array[1],
+                'eHH': array[2],
+                'eNN': array[3],
+                'eHNpsilon_AB': array[4],
+                'mu_H': mu_H,
+                'mu_N': array[5],
+                'T': T  
+                })  #Temperature (in units of k)
+    # Run the simulation 5 * 5 grids to be fancy
+    sizex = 5
+    sizey = 5
+    np.random.seed(42)
+    #Creates a matrix of matricies of the same size as my lattices
+    final_lattice = np.zeros((len(mus_H), len(Ts), sizex, sizey))
+    #creates two matricies of the size of the two array values we're changing
+    mean_coverage_H = np.zeros((len(mus_H), len(Ts)))
+    mean_coverage_N = np.zeros((len(mus_H), len(Ts)))
+    for i, param in enumerate(params):
+        #runs the grand cannonical and retrives it's results
+        lattice, coverage_N, coverage_H = grand_cannonical(n_steps,sizex,sizey,param)
+        #Fixed latice is the same as the old lattice but only contains integers so that it dosn't make python go into cardiac arrest when I shove it into the final lattice matrix
+        Fixed_lattice = string_ripper(lattice,'H','N')
+        final_lattice[i // len(Ts), i % len(Ts)] = Fixed_lattice
+        mean_coverage_H[i // len(Ts), i % len(Ts)] = np.mean(coverage_H[-1000:])
+        mean_coverage_N[i // len(Ts), i % len(Ts)] = np.mean(coverage_N[-1000:])
+    
+    # Plot the T-mu_A phase diagram
+    fig, axs = plt.subplot_mosaic([[0, 1, 2],[3, 4, 5]], figsize=(6.5, 4.5))
+
+    # Mean coverage of A
+    axs[0].pcolormesh(mus_H, Ts, mean_coverage_H.T, cmap='viridis', vmin=0, vmax=1)
+    axs[0].set_title(r'$\langle \theta_A \rangle$')
+    axs[0].set_xlabel(r'$\mu_A$')
+    axs[0].set_ylabel(r'$T$')
+
+    # Mean coverage of B
+    axs[1].pcolormesh(mus_H, Ts, mean_coverage_N.T, cmap='viridis', vmin=0, vmax=1)
+    axs[1].set_title(r'$\langle \theta_B \rangle$')
+    axs[1].set_xlabel(r'$\mu_A$')
+    axs[1].set_yticks([])
+
+    # Mean total coverage
+    cax = axs[2].pcolormesh(mus_H, Ts, mean_coverage_H.T + mean_coverage_N.T, cmap='viridis', vmin=0, vmax=1)
+    axs[2].set_title(r'$\langle \theta_A + \theta_B \rangle$')
+    axs[2].set_xlabel(r'$\mu_A$')
+    axs[2].set_yticks([])
+    fig.colorbar(cax, ax=axs[2], location='right', fraction=0.1)
+
+    # mu_A = -0.2 eV and T = 0.01 / k
+    axs[3] = plot_lattice(final_lattice[0, 3], axs[3], r'$\mu_A = -0.2$ eV, $T = 116K$', 'H', 'N')
+
+    # mu_A = -0.1 eV and T = 0.01 / k
+    axs[4] = plot_lattice(final_lattice[3, 3], axs[4], r'$\mu_A = -0.1$ eV, $T = 116K$', 'H', 'N')
+
+    # mu_A = 0 eV and T = 0.01 / k
+    axs[5] = plot_lattice(final_lattice[6, 3], axs[5], r'$\mu_A = 0$ eV, $T = 116K$', 'H', 'N')
+
+    plt.tight_layout()
+    plt.show()
