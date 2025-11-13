@@ -67,12 +67,16 @@ def energy_calculator(grid, neighbors, parameters):
     NNrg = parameters.get('eNN')
     HHrg = parameters.get('eHH')
     HNrg = parameters.get('eNH')
-
     #Evaluates every cell in every row of the grid.
     for i, row in enumerate(grid):
         for j, element in enumerate(row):
             #If the cell is 0 it can be ignored since it has nothing to offer
-            if element == 0 or '0':
+            if element == 0:
+                pass
+            #BUT I HAVE TO DO THIS NONSENCE BECAUSE NO STRINGS IN THE INT MATRIX I LOVE PYTHON
+            elif element == '0':
+                pass
+            elif element =='0.0':
                 pass
             #If the cell is nitrogen:
             elif element == 'N':
@@ -396,7 +400,7 @@ for array in The_Big_Kahuna:
                 'eN': array[1],
                 'eHH': array[2],
                 'eNN': array[3],
-                'eHNpsilon_AB': array[4],
+                'eNH': array[4],
                 'mu_H': mu_H,
                 'mu_N': array[5],
                 'T': T  
