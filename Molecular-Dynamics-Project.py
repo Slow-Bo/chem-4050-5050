@@ -388,7 +388,7 @@ The_Big_Kahuna = [Ideal_Mixture,Repulsive_Interactions,Attractive_Interactions,I
 #These are the basic values we will be testing, they should remain the same in all simulations
 n_steps = 10000
 mus_H = np.linspace(-0.2, 0, 7)
-Ts = np.linspace(1, 201, 7)
+Ts = np.linspace(0.001, 0.019, 7)
 #Runs through each array and prepares it for the Grand cannonical
 for array in The_Big_Kahuna:
     params = []
