@@ -1,12 +1,12 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
-
+import scipy.constants as con
 import matplotlib.pyplot as plt
 
 #The variables to run throught all my functions
 sizeX = 4
 sizeY = 4
-
+k = con.Boltzmann / con.eV
 #Some filler parameters for testing because of how I coded this any dictionary I feed in as parameters, MUST have this format
 Filler_params ={
     'eH': -0.1,
@@ -173,8 +173,8 @@ def gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
             #Calculates the energy of the new grid
             NewE = energy_calculator(new_grid, neighbors, parameters)
             #Runs the metropolis algrithom and prepares a random value to compare it's result to
-            Acc = min(1, (Empt_Sites - N_Sites) / (N_Sites + 1) * np.exp(-beta * ((NewE - OldE) - N_Pot)))
-            if np.random.rand() <= Acc:
+            Acc = min(1, (Empt_Sites) / (N_Sites + 1) * np.exp(-beta * ((NewE - OldE) - N_Pot)))
+            if np.random.rand() < Acc:
                 #When the grid is accepted by metropolis it sets the old grid equal to it and changes the number of N and empty sites
                 grid = new_grid
                 N_Sites += 1
@@ -188,7 +188,7 @@ def gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
             #Calculates the energy of the new grid
             NewE = energy_calculator(new_grid, neighbors, parameters)
             #Runs the metropolis algrithom and prepares a random value to compare it's result to
-            Acc = min(1, (Empt_Sites - H_Sites) / (H_Sites + 1) * np.exp(-beta * ((NewE - OldE) - H_Pot)))
+            Acc = min(1, (Empt_Sites) / (H_Sites + 1) * np.exp(-beta * ((NewE - OldE) - H_Pot)))
             if np.random.rand() < Acc:
                 #When the grid is accepted by metropolis it sets the old grid equal to it and changes the number of N and empty sites
                 grid = new_grid
@@ -246,17 +246,17 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
         new_grid = [k[:] for k in grid]
         new_grid[Chosen_X][Chosen_Y] = 0
         #Calculates the energy of the new grid
-        NewE = energy_calculator(grid, neighbors, parameters)
+        NewE = energy_calculator(new_grid, neighbors, parameters)
         #If the original                grid, contained a nitrogen:
         if grid[Chosen_X][Chosen_Y] == 'N':
             #A failsafe for when the denominator of the first part of the metropolis algrythem == 0
-            if Empt_Sites - N_Sites + 1 == 0:
+            if Empt_Sites + 1 == 0:
                 Denom = 1E-30
             else:
             #If it dosn't the function just calculates the algryhtem and determins if it should accept the new grid
-                Denom = Empt_Sites - N_Sites + 1
+                Denom = Empt_Sites + 1
             Acc = min(1, N_Sites/Denom * np.exp(-beta * ((NewE - OldE) + N_Pot)))
-            if np.random.rand() <= Acc:
+            if np.random.rand() < Acc:
                 #If it does sets the old grid to the new grid and changes the values of N_Sites and Empty_Sites to match
                 grid = new_grid
                 N_Sites += -1
@@ -264,13 +264,13 @@ def take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
         #If the original                grid, contained a hydrogen:
         elif grid[Chosen_X][Chosen_Y] == 'H':
             #A failsafe for when the denominator of the first part of the metropolis algrythem == 0
-            if Empt_Sites - H_Sites + 1 == 0:
+            if Empt_Sites + 1 == 0:
                 Denom = 1E-30
             #If it dosn't the function just calculates the algryhtem and determins if it should accept the new grid
             else:
-                Denom = Empt_Sites - H_Sites + 1
+                Denom = Empt_Sites + 1
             Acc = min(1, H_Sites/Denom * np.exp(-beta * ((NewE - OldE) + H_Pot)))
-            if np.random.rand() <= Acc:
+            if np.random.rand() < Acc:
                 #If it does sets the old grid to the new grid and changes the values of N_Sites and Empty_Sites to match
                 grid = new_grid
                 H_Sites += -1
@@ -316,11 +316,12 @@ grid, grid_data = create_grid(sizeX,sizeY)
 #print(grid_data.get((0,1)))
 
 #Creating a not so blank grid for further testing
-Test_grid = [['N',0,0,0],
-             ['H',0,0,0],
-             ['H',0,0,0],
-             ['N',0,0,0]
+Test_grid = [['H','N',0,0],
+             ['0','0.0',0,0],
+             [0,0,0,0],
+             ['N','H',0,0]
 ]
+
 #A function that turns all those annoying stings into integers so my code will actually accept them
 def string_ripper(lattice,string1:str,string2:str):
     #Creates a matrix of the same dimensions as the original, but with only zeros
@@ -366,7 +367,7 @@ def plot_lattice(lattice, ax, title, particle1:str, particle2:str):
     # Add labels for N and H, I found where to put them through trial and error
     ax.text(2, -0.5, title, ha='center')
     ax.text(1, 5.2, 'Adsorbed ' + particle1, color='blue', ha='center')
-    ax.text(3.5, 5.2, 'Adsorbed ' + particle2, color='red', ha='center')
+    ax.text(3.7, 5.2, 'Adsorbed ' + particle2, color='red', ha='center')
     
     # Hide ticks
     ax.set_xticklabels([])
@@ -426,22 +427,24 @@ for array in The_Big_Kahuna:
     # Plot the T-mu_A phase diagram
     fig, axs = plt.subplot_mosaic([[0, 1, 2],[3, 4, 5]], figsize=(6.5, 4.5))
 
+    #Converts the Temperature to the real temperature
+    
     # Mean coverage of A
-    axs[0].pcolormesh(mus_H, Ts, mean_coverage_H.T, cmap='viridis', vmin=0, vmax=1)
-    axs[0].set_title(r'$\langle \theta_A \rangle$')
-    axs[0].set_xlabel(r'$\mu_A$')
+    axs[0].pcolormesh(mus_H, Ts/k, mean_coverage_H.T, cmap='viridis', vmin=0, vmax=1)
+    axs[0].set_title(r'$\langle \theta_H \rangle$')
+    axs[0].set_xlabel(r'$\mu_H$')
     axs[0].set_ylabel(r'$T$')
 
     # Mean coverage of B
-    axs[1].pcolormesh(mus_H, Ts, mean_coverage_N.T, cmap='viridis', vmin=0, vmax=1)
-    axs[1].set_title(r'$\langle \theta_B \rangle$')
-    axs[1].set_xlabel(r'$\mu_A$')
+    axs[1].pcolormesh(mus_H, Ts/k, mean_coverage_N.T, cmap='viridis', vmin=0, vmax=1)
+    axs[1].set_title(r'$\langle \theta_N \rangle$')
+    axs[1].set_xlabel(r'$\mu_H$')
     axs[1].set_yticks([])
 
     # Mean total coverage
-    cax = axs[2].pcolormesh(mus_H, Ts, mean_coverage_H.T + mean_coverage_N.T, cmap='viridis', vmin=0, vmax=1)
-    axs[2].set_title(r'$\langle \theta_A + \theta_B \rangle$')
-    axs[2].set_xlabel(r'$\mu_A$')
+    cax = axs[2].pcolormesh(mus_H, Ts/k, mean_coverage_H.T + mean_coverage_N.T, cmap='viridis', vmin=0, vmax=1)
+    axs[2].set_title(r'$\langle \theta_H + \theta_N \rangle$')
+    axs[2].set_xlabel(r'$\mu_H$')
     axs[2].set_yticks([])
     fig.colorbar(cax, ax=axs[2], location='right', fraction=0.1)
 
