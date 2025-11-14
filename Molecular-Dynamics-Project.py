@@ -115,7 +115,79 @@ def energy_calculator(grid, neighbors, parameters):
     #Gives back the energy
     return Energy
 
-    
+#Bonus point function to swap two particles on the grid, agin with an obscure refrence
+def you_got_da_bonus(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
+    """
+    Determens Whether and where to swap two particles on a grid.
+
+    Parameters:
+    grid (matrix): The grid to have a particle added to it.
+    neighbors (dictionary): A dictonary tied to the associated grid that contains the neighbors for each cell.
+    parameters (dictionary): A dictonary of extremly particular form contaning the needed parameters for simulation.
+    Empt_Sites (Integer): The number of empty sites in the grid
+    N_Sites (Integer): The number of nitrogen sites in the grid
+    H_Sites (Integer): The number of hydrogen sites in the grid
+
+    Returns:
+    Empt_Sites (Integer): The number of empty sites in the new grid
+    N_Sites (Integer): The number of nitrogen sites in the new grid
+    H_Sites (Integer): The number of hydrogen sites in the new grid
+    grid (Matrix): The new grid, whether or not it's the same as the old grid
+    """
+    #Gets the needed parameters from the parameters
+    N_Pot = parameters.get('mu_N')
+    H_Pot = parameters.get('mu_H')
+    #Calculates the energy of the current grid
+    OldE = energy_calculator(grid, neighbors, parameters)
+    beta = 1/(parameters.get('T'))
+    #If there are no N spots the function terminates immediatly
+    if N_Sites == 0:
+        return Empt_Sites, N_Sites, H_Sites, grid
+    #If there are no H spots the function terminates immediatly
+    elif H_Sites == 0:
+        return Empt_Sites, N_Sites, H_Sites, grid
+    #If there are both N and H spots the function does something
+    else:
+        #Creates an array for valid N_sites and H sites
+        Valid_N_Sites = []
+        Valid_H_Sites = []
+        #Checks every cell in every row for a valid value
+        for i, row in enumerate(grid):
+            for j, element in enumerate(row):
+                #Considers a site valid if it has either an N or an H, I just realized I could have programed the other one to accept any value that wasn't N or H and it would have been easier
+                if element == 'N':
+                    Valid_N_Sites.append((i, j))
+                elif element == 'H':
+                    Valid_H_Sites.append((i, j))
+        #Choses one of the valid H sites at random and gets its X and Y value to become an N
+        Chosen_N = np.random.choice(len(Valid_H_Sites))
+        Chosen_NX = Valid_H_Sites[Chosen_N][0]
+        Chosen_NY = Valid_H_Sites[Chosen_N][1]
+        #Choses one of the valid N sites at random and gets its X and Y value to become an H
+        Chosen_H = np.random.choice(len(Valid_N_Sites))
+        Chosen_HX = Valid_N_Sites[Chosen_H][0]
+        Chosen_HY = Valid_N_Sites[Chosen_H][1]
+        
+        #Converts all the values in the grid to a string because God has a cruel sence of humor and this is the only way it would work
+        new_grid = [[str(ele) for ele in k] for k in grid]
+        #Adds a Nitrogen and Hydrogen to the chosen spots of the new grid
+        new_grid[Chosen_NX][Chosen_NY] = 'N'
+        new_grid[Chosen_HX][Chosen_HY] = 'H'
+        #Calculates the energy of the new grid
+        NewE = energy_calculator(new_grid, neighbors, parameters)
+        #I really felt like preparing the metropolis equation in parts so I could see the whole thing, I did the math on paper, but the eqaution is right
+        MetroPart1 = (Empt_Sites+1)**-1*(H_Sites/np.exp(beta*H_Pot)+N_Sites/np.exp(beta*N_Pot))
+        MetroPart2 = (Empt_Sites)*(np.exp(beta*H_Pot)/(1+H_Sites)+np.exp(beta*N_Pot)/(1+N_Sites))
+        #Runs the metropolis algrithom and prepares a random value to compare it's result to
+        Acc = min(1, np.exp(-beta*(NewE-OldE))*(MetroPart1 + MetroPart2))
+        if np.random.rand() < Acc:
+                #When the grid is accepted by metropolis it sets the old grid equal to it and changes the number of N and empty sites
+                grid = new_grid
+                N_Sites += 1
+                Empt_Sites -= 1
+        #Returns the new amount of emty sites, N, and H on the new grid
+        return Empt_Sites, N_Sites, H_Sites, grid
+
 #Function to add a particle to the grid
 def gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites):
     """
@@ -296,15 +368,16 @@ def grand_cannonical(Steps, sizeX, sizeY, parameters):
     for i in range(Steps):
         #Choses whether to run the add or subtract function
         #There is no way on God's green earth anyone but me undestands the refrence of the names of these two functions
-        add_or_subtract = np.random.choice(2) > 0.5
-        if add_or_subtract == True:
+        add_or_subtract = np.random.choice(3)
+        if add_or_subtract == 0:
             #If the function decides to add feeds all the values into the addition function
-            Empt_Sites, N_Sites, H_Sites, grid = gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites)
-            
-        elif add_or_subtract == False:
+            Empt_Sites, N_Sites, H_Sites, grid = gonna_add_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites)   
+        elif add_or_subtract == 1:
             #If the function decides to add feeds all the values into the subtraction function
             Empt_Sites, N_Sites, H_Sites, grid = take_away_one(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites)
-        
+        elif add_or_subtract == 3:
+            #If the funcction decides to swap two particles it runs the bonus function
+            Empt_Sites, N_Sites, H_Sites, grid = you_got_da_bonus(grid, neighbors, parameters, Empt_Sites, N_Sites, H_Sites)
         #Figures out what the coverage of the new grid is and adds it to the Metropolis array
         NCoverage.append(N_Sites/Total_Sites)
         HCoverage.append(H_Sites/Total_Sites)
