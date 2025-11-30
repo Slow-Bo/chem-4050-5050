@@ -168,11 +168,12 @@ def velocity_rescaling(velocities, target_temp, massKg):
 def radius_of_gyration(positions):
     mean_pot = np.sum(positions,axis=0)
     for position in range(len(positions)):
-        positions[position] = np.subtract(positions[position],mean_pot)
-    Rg_squared = np.mean(np.sum((positions)**2, axis=1))
+        positions[position] = (np.subtract(positions[position],mean_pot))**2
+    Rg_squared = np.mean(np.sum((positions), axis=1))
     Rg = np.sqrt(Rg_squared)
     return Rg
 
 def calculate_end_to_end_distance(positions):
-    Ree = np.sqrt(np.sum(np.subtract(positions[-1],positions[0])))
+    Ree = np.sqrt(np.sum(np.subtract(positions[-1],positions[0])**2))
     return Ree
+
