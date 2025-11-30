@@ -70,5 +70,24 @@ def compute_harmonic_positions(positions, k, r0, box_size):
     #Creates a zero vector the same size as the position vector
     forces = np.zeros_like(positions)
     #Begins the calculate the force on each particle
-    for particle in range(len(positions)-2):
-        pass
+    for particle in range(len(positions)-1):
+        #Calculates the difference in two particles
+        displacement = np.subtract(positions[particle+1],positions[particle])
+        #This allows for the distance to pass between box boundries.
+        #I did not figure this out myself unfortnatly since microsoft's wonderful AI decided to shove the correct answer in my face when I tried to research it
+        #For what it's worth I did verify it would work on paper
+        displacement = displacement - box_size * np.round(displacement / box_size)
+        #Finds the radius of displacemnt by squaring it summing it and squarooting it in that order
+        distance = np.sqrt(np.sum(displacement**2))
+        #Calculates force magnitude in accordance with hooks law
+        force_magnitude = -k * (distance - r0)
+        #Calculates the force, the psudeocode does it in two, otherwise I would do it in one
+        force = force_magnitude * (displacement/distance)
+        #adds new values onto forces
+        forces[particle] -= force
+        forces[particle+1] += force
+    return forces
+
+#Based of this print it seems to be working, if r0 for initialization = r0 it prints values of almost 0
+#The values otherwise seem weird to my monkey brain but they do make since based of the logic of everything in the middle being pulled in two directions
+print(compute_harmonic_positions(create_chain(7,7, 2),4,3,7))
