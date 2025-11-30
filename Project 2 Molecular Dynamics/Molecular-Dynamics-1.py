@@ -97,6 +97,7 @@ def lennard_jones_forces(positions, epsilon, sigma:float, box_size:float, intera
     #note to my future self epsilon 0 is ATTRACTIVE, and epsilon 1 is REPULSIVE
     #Creates a zero vector the same size as the position vector
     forces = np.zeros_like(positions)
+    cutoff = 0.0
     #Prepares an e to be the chosen epsilon
     e = float
     #Sorts through all the particles
@@ -105,8 +106,12 @@ def lennard_jones_forces(positions, epsilon, sigma:float, box_size:float, intera
             #sees if particles are 2 apart or more for attractive and repulsive interactions respectivly
             if interaction_type == 'atr' and abs(i-j) == 2:
                 e = epsilon[0]
+                #Sets cutoff to box size since the cutoff is irrelevent for attractive forces
+                cutoff = box_size
             elif interaction_type == 'rep' and abs(i-j) > 2:
                 e = epsilon[1]
+                #Sets cutoff to lj_minimum since repulsion dosn't exist beond that
+                cutoff = sigma * 2**(1/6)
             else:
                 continue
             #Calculates the difference in two particles
@@ -117,14 +122,72 @@ def lennard_jones_forces(positions, epsilon, sigma:float, box_size:float, intera
             displacement = displacement - box_size * np.round(displacement / box_size)
             #Finds the radius of displacemnt by squaring it summing it and squarooting it in that order
             distance = np.sqrt(np.sum(displacement**2))
-            #Checks if the distance is less than 2, the doc said it should be 2^(1/6), but I feel that is a bit small
-            if distance < (sigma * 2):
+            #Checks if the distance is less than cutoff, should be irrelevent for attractive forces
+            if distance < cutoff:
                 #Calculates the lenard jones forces and adds them to the forces array
                 force_magnitude = 24 * e * [ (sigma / distance)^{12} - 0.5 * (sigma / distance)^6 ] / distance
                 force = force_magnitude * (displacement / distance)
                 forces[i] -= force
                 forces[j] += force
     return forces
+
+def calculate_harmonic_potental(positions,k,r0,box_size):
+    Harmonic_Potentials = 0.0
+    for particle in range(len(positions)-1):
+        #Calculates the difference in two particles
+        displacement = np.subtract(positions[particle+1],positions[particle])
+        #This allows for the distance to pass between box boundries.
+        #I did not figure this out myself unfortnatly since microsoft's wonderful AI decided to shove the correct answer in my face when I tried to research it
+        #For what it's worth I did verify it would work on paper
+        displacement = displacement - box_size * np.round(displacement / box_size)
+        #Finds the radius of displacemnt by squaring it summing it and squarooting it in that order
+        distance = np.sqrt(np.sum(displacement**2))
+        #Calculates the contribution of this interaction to potental energy
+        Harmonic_Potential = 0.5* k * (distance - r0)**2
+        Harmonic_Potentials += Harmonic_Potential
+    #Returns the total harmonic potential
+    return Harmonic_Potential
+    
+#A function to calculate the lenard jones potential
+def lennard_jones_potential(positions, epsilon, sigma:float, box_size:float, interaction_type:str):
+    #note to my future self epsilon 0 is ATTRACTIVE, and epsilon 1 is REPULSIVE
+    #Creates a zero variable to have the lenard jones energies
+    lj_potential = 0.0
+    cutoff = 0.0
+    #Since the LJ potental has an extra bit for repulsion this acounts for that
+    extra_bit = 0.0
+    #Prepares an e to be the chosen epsilon
+    e = float
+    #Sorts through all the particles
+    for i in range(len(positions)):
+        for j in range(i+1,len(positions)):
+            #sees if particles are 2 apart or more for attractive and repulsive interactions respectivly
+            if interaction_type == 'atr' and abs(i-j) == 2:
+                e = epsilon[0]
+                #Sets cutoff to box size since the cutoff is irrelevent for attractive forces
+                cutoff = box_size
+            elif interaction_type == 'rep' and abs(i-j) > 2:
+                e = epsilon[1]
+                #Sets cutoff to lj_minimum since repulsion dosn't exist beond that
+                cutoff = sigma * 2**(1/6)
+                #prepares the extra bit for the LJ equation
+                extra_bit = 1/4
+            else:
+                continue
+            #Calculates the difference in two particles
+            displacement = np.subtract(positions[j],positions[i])
+            #This allows for the distance to pass between box boundries.
+            #I did not figure this out myself unfortnatly since microsoft's wonderful AI decided to shove the correct answer in my face when I tried to research it
+            #For what it's worth I did verify it would work on paper
+            displacement = displacement - box_size * np.round(displacement / box_size)
+            #Finds the radius of displacemnt by squaring it summing it and squarooting it in that order
+            distance = np.sqrt(np.sum(displacement**2))
+            if distance < cutoff:
+                #adds the contribution of the potential to toal potential 
+                potental_contribution = 4 * e * ((sigma/distance)**12-(sigma/distance)**6+extra_bit)
+                lj_potential += potental_contribution
+    #returns total potential
+    return lj_potential
 
 #A function to shove all our force functions into one for conveninence
 def compute_forces(positions,k,r0,epsilon,sigma,box_size):
@@ -134,6 +197,14 @@ def compute_forces(positions,k,r0,epsilon,sigma,box_size):
     lj_repulisve_new = lennard_jones_forces(positions,epsilon,sigma,box_size,'rep')
     forces_new = np.add(np.add(lj_repulisve_new,lj_attractive_new),harmonic_forces_new)
     return forces_new
+
+#A function to shove all our potential functions into one for conveninence
+def compute_potential(positions,k,r0,epsilon,sigma,box_size):
+    new_harmonics = calculate_harmonic_potental(positions,k,r0,box_size)
+    new_LJ_atr = lennard_jones_potential(positions, epsilon, sigma, box_size, 'atr')
+    new_LJ_rep = lennard_jones_potential(positions, epsilon, sigma, box_size,'rep')
+    new_potential = new_LJ_rep + new_LJ_atr + new_harmonics
+    return new_potential
 
 #A function to calculate the verlet velocities
 def velocity_verlet(positions, box_size, velocities, forces, dt, mass, k, r0, epsilon, sigma):
@@ -177,3 +248,53 @@ def calculate_end_to_end_distance(positions):
     Ree = np.sqrt(np.sum(np.subtract(positions[-1],positions[0])**2))
     return Ree
 
+#A new function simply for changing the position for metropolis so there is no string BS, and idea I came up with unfortnatly after the last project
+def random_change(positions):
+    Valid_Sites = []
+    for j, row in enumerate(positions):
+        for k, element in enumerate(row):
+            Valid_Sites.append((j, k))
+    #Choses one of the valid sites at random and gets its X and Y
+    Chosen_Site = np.random.choice(len(Valid_Sites))
+    Chosen_X = Valid_Sites[Chosen_Site][0]
+    Chosen_Y = Valid_Sites[Chosen_Site][1]
+    #changes the positions by a small value
+    change = np.random.choice(0.01,-0.01)
+    positions[Chosen_X][Chosen_Y] += change
+    return positions
+
+#Uses the metropolis algorythom to optimize the chain positions
+def optimize_chain(positions,k,r0,epsilon,sigma,box_size,T,steps):
+    beta = 1/(T*Kb)
+    for i in range(steps):
+        new_positions = random_change(positions)
+        NewE = compute_potential(new_positions,k,r0,epsilon,sigma,box_size)
+        OldE = compute_potential(positions,k,r0,epsilon,sigma,box_size)
+        Acc = min(1, np.exp(-beta * (NewE - OldE)))
+        if np.random.rand() < Acc:
+            positions = new_positions
+    return positions
+
+# Simulation parameters
+dt = 0.01  #Time step
+optimization_steps = 100000 #The number of steps to be used in the optimizer
+total_steps = 10000  # Number of steps
+box_size = 100.0  # Size of the cubic box
+k = 1.0  # Spring constant
+mass = 1.0  # Particle mass
+r0 = 1.0  # Equilibrium bond length
+target_temperature = 0.1  # Target temperature
+rescale_interval = 100  # Steps between velocity rescaling
+n_particles = 20  # Number of particles
+epsilon_repulsive = 1.0  # Depth of repulsive LJ potential
+epsilon_attractive = 0.5  # Depth of attractive LJ potential
+sigma = 1.0  # LJ potential parameter
+epsilon = [epsilon_attractive,epsilon_repulsive]
+T = 10
+
+# Initialize positions and velocities
+positions = create_chain(n_particles, box_size, r0)
+optimized_positions = optimize_chain(positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
+velocities = initial_velocities(n_particles, target_temperature, mass)
+
+print(optimized_positions)
