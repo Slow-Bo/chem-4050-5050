@@ -65,7 +65,7 @@ def initial_velocities(length:int,Target_temp:float,mass_Kg:float):
     #Whatever dispite being as graceful as a crocodile in a tutu, this method works
 
 #A function to compute our harmonic forces
-def compute_harmonic_positions(positions, k, r0, box_size):
+def compute_harmonic_forces(positions, k:float, r0:float, box_size:float):
     #Note to my future self k is the SPRING CONSTANT, not the Boltzmann constant
     #Creates a zero vector the same size as the position vector
     forces = np.zeros_like(positions)
@@ -90,4 +90,89 @@ def compute_harmonic_positions(positions, k, r0, box_size):
 
 #Based of this print it seems to be working, if r0 for initialization = r0 it prints values of almost 0
 #The values otherwise seem weird to my monkey brain but they do make since based of the logic of everything in the middle being pulled in two directions
-print(compute_harmonic_positions(create_chain(7,7, 2),4,3,7))
+#print(compute_harmonic_forces(create_chain(7,7, 2),4,3,7))
+
+#A function to calculate the lenard jones force
+def lennard_jones_forces(positions, epsilon, sigma:float, box_size:float, interaction_type:str):
+    #note to my future self epsilon 0 is ATTRACTIVE, and epsilon 1 is REPULSIVE
+    #Creates a zero vector the same size as the position vector
+    forces = np.zeros_like(positions)
+    #Prepares an e to be the chosen epsilon
+    e = float
+    #Sorts through all the particles
+    for i in range(len(positions)):
+        for j in range(i+1,len(positions)):
+            #sees if particles are 2 apart or more for attractive and repulsive interactions respectivly
+            if interaction_type == 'atr' and abs(i-j) == 2:
+                e = epsilon[0]
+            elif interaction_type == 'rep' and abs(i-j) > 2:
+                e = epsilon[1]
+            else:
+                continue
+            #Calculates the difference in two particles
+            displacement = np.subtract(positions[j],positions[i])
+            #This allows for the distance to pass between box boundries.
+            #I did not figure this out myself unfortnatly since microsoft's wonderful AI decided to shove the correct answer in my face when I tried to research it
+            #For what it's worth I did verify it would work on paper
+            displacement = displacement - box_size * np.round(displacement / box_size)
+            #Finds the radius of displacemnt by squaring it summing it and squarooting it in that order
+            distance = np.sqrt(np.sum(displacement**2))
+            #Checks if the distance is less than 2, the doc said it should be 2^(1/6), but I feel that is a bit small
+            if distance < (sigma * 2):
+                #Calculates the lenard jones forces and adds them to the forces array
+                force_magnitude = 24 * e * [ (sigma / distance)^{12} - 0.5 * (sigma / distance)^6 ] / distance
+                force = force_magnitude * (displacement / distance)
+                forces[i] -= force
+                forces[j] += force
+    return forces
+
+#A function to shove all our force functions into one for conveninence
+def compute_forces(positions,k,r0,epsilon,sigma,box_size):
+    #It just runs all my force funcctions, it isn't rocket science
+    harmonic_forces_new = compute_harmonic_forces(positions,k,r0,box_size)
+    lj_attractive_new = lennard_jones_forces(positions,epsilon,sigma,box_size,'atr')
+    lj_repulisve_new = lennard_jones_forces(positions,epsilon,sigma,box_size,'rep')
+    forces_new = np.add(np.add(lj_repulisve_new,lj_attractive_new),harmonic_forces_new)
+    return forces_new
+
+#A function to calculate the verlet velocities
+def velocity_verlet(positions, box_size, velocities, forces, dt, mass, k, r0, epsilon, sigma):
+    #Sets the velocities to half the new forces over the time step
+    velocities += 0.5 * forces / mass * dt
+    #changes positions based on velocitiy
+    positions += velocities * dt
+    #Ensures nobody has left the box
+    for position in positions:
+        for coord in position:
+            coord = Modulalo(coord, box_size)
+    #Calculates the new forces based on positions
+    forces_new = compute_forces(positions,k,r0,epsilon,sigma,box_size)
+    #Sets the velocities to the new forces over the other half of the time step
+    velocities += 0.5 * forces_new / mass * dt
+    return positions, velocities, forces_new
+
+#A function to do the anderson rescaling
+def velocity_rescaling(velocities, target_temp, massKg):
+    n_particles = len(velocities)
+    #An empty number to be made into the summed absolute values of the velocities squared
+    v_squared = 0.0
+    #adds the r^2 value of each velocity to v_squared
+    for velocity in velocities:
+        v_squared += np.sum(velocity**2)
+    kinetic_energy = 0.5 * massKg * v_squared
+    temp_current = (2/3) * kinetic_energy / (n_particles * Kb)
+    scaling_factor = np.sqrt(target_temp/temp_current)
+    velocities *= scaling_factor
+    return velocities
+
+def radius_of_gyration(positions):
+    mean_pot = np.sum(positions,axis=0)
+    for position in range(len(positions)):
+        positions[position] = np.subtract(positions[position],mean_pot)
+    Rg_squared = np.mean(np.sum((positions)**2, axis=1))
+    Rg = np.sqrt(Rg_squared)
+    return Rg
+
+def calculate_end_to_end_distance(positions):
+    Ree = np.sqrt(np.sum(np.subtract(positions[-1],positions[0])))
+    return Ree
