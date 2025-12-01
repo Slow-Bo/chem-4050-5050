@@ -284,7 +284,8 @@ optimization_steps = 1000 #The number of steps to be used in the optimizer
 total_steps = 100  #Number of steps
 box_size = 100.0  #Size of the cubic box
 k = 1.0  #Spring constant
-mass = 1.0  #Particle mass IN KILOGRAMS
+#I changed the mass to 3.01E-25 since it is the weight of tyrosine in kilograms, which as a heavier amino acid would be a good stand in for whatever our monomer is.
+mass = 3.01E-25  #Particle mass IN KILOGRAMS
 r0 = 1.0  #Equilibrium bond length
 target_temperature = 0.1  #Target temperature
 rescale_interval = 100  #Steps between velocity rescaling
