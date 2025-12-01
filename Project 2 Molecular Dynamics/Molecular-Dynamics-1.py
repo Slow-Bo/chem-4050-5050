@@ -1,10 +1,11 @@
 #Imports all the functions I can't code as well as a few constants
 import numpy as np
 import scipy.constants as con
+import matplotlib.pyplot as plt
 
 #The constants my functions need to, well function
 Kb = con.Boltzmann
-
+eV = con.eV
 #I couldn't figure out the function to bind a value to a certain range so I made my own
 def Modulalo(X,Box_Size):
     
@@ -122,10 +123,11 @@ def lennard_jones_forces(positions, epsilon, sigma:float, box_size:float, intera
             displacement = displacement - box_size * np.round(displacement / box_size)
             #Finds the radius of displacemnt by squaring it summing it and squarooting it in that order
             distance = np.sqrt(np.sum(displacement**2))
+            
             #Checks if the distance is less than cutoff, should be irrelevent for attractive forces
             if distance < cutoff:
                 #Calculates the lenard jones forces and adds them to the forces array
-                force_magnitude = 24 * e * [ (sigma / distance)^{12} - 0.5 * (sigma / distance)^6 ] / distance
+                force_magnitude = 24 * e * ( (sigma / distance)**(12) - 0.5 * (sigma / distance)**6 ) / distance
                 force = force_magnitude * (displacement / distance)
                 forces[i] -= force
                 forces[j] += force
@@ -259,42 +261,96 @@ def random_change(positions):
     Chosen_X = Valid_Sites[Chosen_Site][0]
     Chosen_Y = Valid_Sites[Chosen_Site][1]
     #changes the positions by a small value
-    change = np.random.choice(0.01,-0.01)
+    change = np.random.uniform(-0.1,0.1)
     positions[Chosen_X][Chosen_Y] += change
     return positions
 
 #Uses the metropolis algorythom to optimize the chain positions
 def optimize_chain(positions,k,r0,epsilon,sigma,box_size,T,steps):
-    beta = 1/(T*Kb)
+    beta = eV/(T*Kb)
     for i in range(steps):
-        new_positions = random_change(positions)
-        NewE = compute_potential(new_positions,k,r0,epsilon,sigma,box_size)
         OldE = compute_potential(positions,k,r0,epsilon,sigma,box_size)
+        new_positions = np.copy(positions)
+        new_positions = random_change(new_positions)
+        NewE = compute_potential(new_positions,k,r0,epsilon,sigma,box_size)
         Acc = min(1, np.exp(-beta * (NewE - OldE)))
         if np.random.rand() < Acc:
             positions = new_positions
     return positions
 
-# Simulation parameters
+#Simulation parameters taken from the sample code, I will need to change mass since currently each paticle is a kilogram, but this will work for now
 dt = 0.01  #Time step
-optimization_steps = 100000 #The number of steps to be used in the optimizer
-total_steps = 10000  # Number of steps
-box_size = 100.0  # Size of the cubic box
-k = 1.0  # Spring constant
-mass = 1.0  # Particle mass
-r0 = 1.0  # Equilibrium bond length
-target_temperature = 0.1  # Target temperature
-rescale_interval = 100  # Steps between velocity rescaling
-n_particles = 20  # Number of particles
-epsilon_repulsive = 1.0  # Depth of repulsive LJ potential
-epsilon_attractive = 0.5  # Depth of attractive LJ potential
-sigma = 1.0  # LJ potential parameter
+optimization_steps = 1000 #The number of steps to be used in the optimizer
+total_steps = 100  #Number of steps
+box_size = 100.0  #Size of the cubic box
+k = 1.0  #Spring constant
+mass = 1.0  #Particle mass IN KILOGRAMS
+r0 = 1.0  #Equilibrium bond length
+target_temperature = 0.1  #Target temperature
+rescale_interval = 100  #Steps between velocity rescaling
+n_particles = 20  #Number of particles
+epsilon_repulsive = 1.0  #Depth of repulsive LJ potential
+epsilon_attractive = 0.5  #Depth of attractive LJ potential
+sigma = 1.0  #LJ potential parameter
 epsilon = [epsilon_attractive,epsilon_repulsive]
-T = 10
 
-# Initialize positions and velocities
-positions = create_chain(n_particles, box_size, r0)
-optimized_positions = optimize_chain(positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
-velocities = initial_velocities(n_particles, target_temperature, mass)
+#sets the seed for repeatability
+np.random.seed(42)
+# Arrays to store properties
+temperatures = np.linspace(0.1, 1.0, 10)
+Rg_values = []
+Ree_values = []
+potential_energies = []
 
-print(optimized_positions)
+for T in temperatures:
+    #Sets target temperature to T and creates an empty array
+    target_temperature = T
+    potential_energy_array = []
+    #Creates an array named positions
+    positions = create_chain(n_particles, box_size, r0)
+    #Optimizes said array with metropolis
+    optimized_positions = optimize_chain(positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
+    #Calculates all velocities
+    velocities = initial_velocities(n_particles, target_temperature, mass)
+    for step in range(total_steps):
+        forces = compute_forces(optimized_positions,k,r0,epsilon,sigma,box_size)
+        #Finds the new forces and velocites
+        optimized_positions, velocities, forces = velocity_verlet(optimized_positions, box_size, velocities, forces, dt, mass, k, r0, epsilon, sigma)
+        #Calculates the potential energy and adds it to the array
+        new_potential = compute_potential(optimized_positions,k,r0,epsilon,sigma,box_size)
+        potential_energy_array.append(new_potential)
+        #Apply thermostat
+        if step % rescale_interval == 0:
+            velocities = velocity_rescaling(velocities, target_temperature, mass)
+    # Compute properties and adds them to the array
+    Rg = radius_of_gyration(optimized_positions)
+    Ree = calculate_end_to_end_distance(optimized_positions)
+    Rg_values.append(Rg)
+    Ree_values.append(Ree)
+    potential_energies.append(np.mean(potential_energy_array))
+
+
+# Plotting I took from the project page, it's pretty basic, I'm just lazy and didn't feel like coding it myself.
+plt.figure()
+plt.plot(temperatures, Rg_values, label='Radius of Gyration')
+plt.xlabel('Temperature')
+plt.ylabel('Radius of Gyration')
+plt.title('Radius of Gyration vs Temperature')
+plt.legend()
+plt.show()
+
+plt.figure()
+plt.plot(temperatures, Ree_values, label='End-to-End Distance')
+plt.xlabel('Temperature')
+plt.ylabel('End-to-End Distance')
+plt.title('End-to-End Distance vs Temperature')
+plt.legend()
+plt.show()
+
+plt.figure()
+plt.plot(temperatures, potential_energies, label='Potential Energy')
+plt.xlabel('Temperature')
+plt.ylabel('Potential Energy')
+plt.title('Potential Energy vs Temperature')
+plt.legend()
+plt.show()
