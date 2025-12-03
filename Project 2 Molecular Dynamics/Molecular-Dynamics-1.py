@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 #The constants my functions need to, well function
 Kb = con.Boltzmann
 eV = con.eV
+Amu = con.atomic_mass
 #I couldn't figure out the function to bind a value to a certain range so I made my own
 def Modulalo(X,Box_Size):
     
@@ -15,7 +16,7 @@ def Modulalo(X,Box_Size):
         return X % Box_Size
     elif X < 0:
         #If X is negitive it loops back to the maximum value and what reamins of X is the negitive displacemnt
-        return Box_Size + (X % Box_Size)
+        return X % Box_Size
     else:
         #If nither of the above are true X is valid so it just returns X
         return X
@@ -47,7 +48,9 @@ def create_chain(length:int,box_size:float, r0: float):
     return Base_array
 
 #A function to assimble our initial velocities
-def initial_velocities(length:int,Target_temp:float,mass_Kg:float):
+def initial_velocities(length:int,Target_temp:float,mass:float):
+    #Converts the mass from Amu to Kg so that units cancel in the scale factor:
+    mass_Kg = mass * Amu
     # Give the particles random velocities
     velocities = np.random.uniform(-0.5, 0.5, (length, 3))
     # Calculate the center of mass velocity
@@ -215,9 +218,9 @@ def velocity_verlet(positions, box_size, velocities, forces, dt, mass, k, r0, ep
     #changes positions based on velocitiy
     positions += velocities * dt
     #Ensures nobody has left the box
-    for position in positions:
-        for coord in position:
-            coord = Modulalo(coord, box_size)
+    for position in range(len(positions)):
+        for coord in range(len(positions[position])):
+            positions[position][coord] = Modulalo(positions[position][coord], box_size)
     #Calculates the new forces based on positions
     forces_new = compute_forces(positions,k,r0,epsilon,sigma,box_size)
     #Sets the velocities to the new forces over the other half of the time step
@@ -225,29 +228,33 @@ def velocity_verlet(positions, box_size, velocities, forces, dt, mass, k, r0, ep
     return positions, velocities, forces_new
 
 #A function to do the anderson rescaling
-def velocity_rescaling(velocities, target_temp, massKg):
+def velocity_rescaling(velocities, target_temp, mass):
     n_particles = len(velocities)
+    #converts mass from amu to kilograms so that units cancel
+    mass_kg = mass * Amu
     #An empty number to be made into the summed absolute values of the velocities squared
     v_squared = 0.0
     #adds the r^2 value of each velocity to v_squared
     for velocity in velocities:
         v_squared += np.sum(velocity**2)
-    kinetic_energy = 0.5 * massKg * v_squared
+    kinetic_energy = 0.5 * mass_kg * v_squared
+    #For units to cancel mass should be in kilograms if my calculations are correct
     temp_current = (2/3) * kinetic_energy / (n_particles * Kb)
     scaling_factor = np.sqrt(target_temp/temp_current)
     velocities *= scaling_factor
     return velocities
 
 def radius_of_gyration(positions):
-    mean_pot = np.sum(positions,axis=0)
+    radii = np.zeros_like(positions)
+    mean_pot = np.sum(positions,axis=0) / len(positions)
     for position in range(len(positions)):
-        positions[position] = (np.subtract(positions[position],mean_pot))**2
-    Rg_squared = np.mean(np.sum((positions), axis=1))
+        radii[position] = (np.subtract(positions[position],mean_pot))**2
+    Rg_squared = np.mean(np.sum((radii), axis=1))
     Rg = np.sqrt(Rg_squared)
     return Rg
 
 def calculate_end_to_end_distance(positions):
-    Ree = np.sqrt(np.sum(np.subtract(positions[-1],positions[0])**2))
+    Ree = np.sqrt((np.sum(((np.subtract(positions[-1],positions[0]))**2))))
     return Ree
 
 #A new function simply for changing the position for metropolis so there is no string BS, and idea I came up with unfortnatly after the last project
@@ -279,16 +286,21 @@ def optimize_chain(positions,k,r0,epsilon,sigma,box_size,T,steps):
     return positions
 
 #Simulation parameters taken from the sample code, I will need to change mass since currently each paticle is a kilogram, but this will work for now
-dt = 0.01  #Time step
+dt = 0.01  #Time step if I make this in NANOSECONDS I can make length be in NANOMETERS
 optimization_steps = 1000 #The number of steps to be used in the optimizer
-total_steps = 100  #Number of steps
+total_steps = 1000  #Number of steps
 box_size = 100.0  #Size of the cubic box
-k = 1.0  #Spring constant
+k = 99.0  #Spring constant
 #I changed the mass to 3.01E-25 since it is the weight of tyrosine in kilograms, which as a heavier amino acid would be a good stand in for whatever our monomer is.
-mass = 3.01E-25  #Particle mass IN KILOGRAMS
-r0 = 1.0  #Equilibrium bond length
+#Now it dosn't want to work, i'm changing it back
+#I figured it out, only the inital velocities function needs mass in kilograms, but everything else needs mass in daltons, so no matter what I put here it won't work,
+#Unless I bite the bullet and fix the inital velocities function
+#Okay I fixed it, now I will probably still set the mass to that of tyrosine since we aren't creating a chain of hydrogents after all
+mass = 181.07  #Particle mass NOT IN KILOGRAMS
+r0 = 1.0  #Equilibrium bond length, I am not increasing this since these units should be, no this would be in meters right? if dt is in seconds anyway, what would dt need to be for this to make sense I wonder?
+# I figured it out, since the velocity is in meters/second if I say dt is in nanoseconds I can say this is nanometers, which is reasonable enough 10 angstrom, works for me.
 target_temperature = 0.1  #Target temperature
-rescale_interval = 100  #Steps between velocity rescaling
+rescale_interval = 50  #Steps between velocity rescaling
 n_particles = 20  #Number of particles
 epsilon_repulsive = 1.0  #Depth of repulsive LJ potential
 epsilon_attractive = 0.5  #Depth of attractive LJ potential
@@ -303,14 +315,35 @@ Rg_values = []
 Ree_values = []
 potential_energies = []
 
+print(calculate_end_to_end_distance([[50.3049695, 49.76109065, 50.37665302],
+ [50.06285129, 50.15102375, 51.26153974],
+ [49.68545273, 49.40922583, 51.78757349],
+ [48.95969156, 49.97998735, 51.4720916 ],
+ [48.33680258, 49.2747441 , 51.13023187],
+ [48.60032258, 48.87728036, 50.24523635],
+ [49.37245716, 49.25410984, 50.72157495],
+ [48.77663822, 49.97584799, 50.36794342],
+ [48.53051368, 50.34794417, 49.48617786],
+ [49.50468808, 50.46835467, 49.6735492 ],
+ [49.27219262, 49.51020925, 49.47240071],
+ [49.67999522, 49.95365739, 48.68951136],
+ [48.81983376, 49.48548245, 48.42391742],
+ [49.46170906, 49.51551732, 47.68056736],
+ [48.69645887, 49.09907407, 47.22132909],
+ [48.61994052, 48.59530436, 46.32118022],
+ [48.42093551, 48.01822829, 47.08871171],
+ [48.42637096, 47.47488602, 46.27048052],
+ [49.1842839,  47.79114101, 45.73506546],
+ [49.43553884, 47.75168136, 46.69224022]]))
+
 for T in temperatures:
     #Sets target temperature to T and creates an empty array
     target_temperature = T
     potential_energy_array = []
     #Creates an array named positions
-    positions = create_chain(n_particles, box_size, r0)
+    init_positions = create_chain(n_particles, box_size, r0)
     #Optimizes said array with metropolis
-    optimized_positions = optimize_chain(positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
+    optimized_positions = optimize_chain(init_positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
     #Calculates all velocities
     velocities = initial_velocities(n_particles, target_temperature, mass)
     for step in range(total_steps):
@@ -324,8 +357,8 @@ for T in temperatures:
         if step % rescale_interval == 0:
             velocities = velocity_rescaling(velocities, target_temperature, mass)
     # Compute properties and adds them to the array
-    Rg = radius_of_gyration(optimized_positions)
     Ree = calculate_end_to_end_distance(optimized_positions)
+    Rg = radius_of_gyration(optimized_positions)
     Rg_values.append(Rg)
     Ree_values.append(Ree)
     potential_energies.append(np.mean(potential_energy_array))
@@ -334,24 +367,24 @@ for T in temperatures:
 # Plotting I took from the project page, it's pretty basic, I'm just lazy and didn't feel like coding it myself.
 plt.figure()
 plt.plot(temperatures, Rg_values, label='Radius of Gyration')
-plt.xlabel('Temperature')
-plt.ylabel('Radius of Gyration')
+plt.xlabel('Temperature: (K)')
+plt.ylabel('Radius of Gyration: (nm)')
 plt.title('Radius of Gyration vs Temperature')
 plt.legend()
 plt.show()
 
 plt.figure()
 plt.plot(temperatures, Ree_values, label='End-to-End Distance')
-plt.xlabel('Temperature')
-plt.ylabel('End-to-End Distance')
+plt.xlabel('Temperature: (K)')
+plt.ylabel('End-to-End Distance: (nm)')
 plt.title('End-to-End Distance vs Temperature')
 plt.legend()
 plt.show()
 
 plt.figure()
 plt.plot(temperatures, potential_energies, label='Potential Energy')
-plt.xlabel('Temperature')
-plt.ylabel('Potential Energy')
+plt.xlabel('Temperature: (K)')
+plt.ylabel('Potential Energy: (eV)')
 plt.title('Potential Energy vs Temperature')
 plt.legend()
 plt.show()
