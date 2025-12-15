@@ -9,7 +9,6 @@ eV = con.eV
 Amu = con.atomic_mass
 #I couldn't figure out the function to bind a value to a certain range so I made my own
 def Modulalo(X,Box_Size):
-    
     if X > Box_Size:
         #If Xmax is smaller than X it loops back to 0 and what is left of X is the positive displacemnt
         return X % Box_Size
@@ -63,6 +62,7 @@ def initial_velocities(length:int,Target_temp:float,mass:float):
     velocities *= Scale_factor
     #After running the print a few times it seems to be working however the mass must be in Kg to work I changed the variable to mass Kg so I won't forget that
     #I probably will still forget to do that
+    #Nevermind, other things needed mass in amu, so now this code just changes amu into kilograms
     return velocities
     #Judging by the psuedo code there was likely a way to get python to set the standard deviation for me
     #Whatever dispite being as graceful as a crocodile in a tutu, this method works
@@ -284,6 +284,7 @@ def optimize_chain(positions,k,r0,epsilon,sigma,box_size,T,steps):
             positions = new_positions
     return positions
 
+
 #Simulation parameters taken from the sample code, I will need to change mass since currently each paticle is a kilogram, but this will work for now
 dt = 0.01  #Time step if I make this in NANOSECONDS I can make length be in NANOMETERS
 optimization_steps = 1000 #The number of steps to be used in the optimizer
@@ -334,6 +335,7 @@ print(calculate_end_to_end_distance([[50.3049695, 49.76109065, 50.37665302],
  [48.42637096, 47.47488602, 46.27048052],
  [49.1842839,  47.79114101, 45.73506546],
  [49.43553884, 47.75168136, 46.69224022]]))
+
 
 for T in temperatures:
     #Sets target temperature to T and creates an empty array
