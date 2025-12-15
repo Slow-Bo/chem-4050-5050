@@ -10,7 +10,6 @@ Amu = con.atomic_mass
 #I couldn't figure out the function to bind a value to a certain range so I made my own
 def Modulalo(X,Box_Size):
     
-    
     if X > Box_Size:
         #If Xmax is smaller than X it loops back to 0 and what is left of X is the positive displacemnt
         return X % Box_Size
@@ -257,7 +256,7 @@ def calculate_end_to_end_distance(positions):
     Ree = np.sqrt((np.sum(((np.subtract(positions[-1],positions[0]))**2))))
     return Ree
 
-#A new function simply for changing the position for metropolis so there is no string BS, and idea I came up with unfortnatly after the last project
+#A new function simply for changing the position for metropolis so there is no string BS, an idea I came up with unfortnatly after the last project
 def random_change(positions):
     Valid_Sites = []
     for j, row in enumerate(positions):
@@ -290,7 +289,7 @@ dt = 0.01  #Time step if I make this in NANOSECONDS I can make length be in NANO
 optimization_steps = 1000 #The number of steps to be used in the optimizer
 total_steps = 1000  #Number of steps
 box_size = 100.0  #Size of the cubic box
-k = 99.0  #Spring constant
+k = 1.0  #Spring constant
 #I changed the mass to 3.01E-25 since it is the weight of tyrosine in kilograms, which as a heavier amino acid would be a good stand in for whatever our monomer is.
 #Now it dosn't want to work, i'm changing it back
 #I figured it out, only the inital velocities function needs mass in kilograms, but everything else needs mass in daltons, so no matter what I put here it won't work,
