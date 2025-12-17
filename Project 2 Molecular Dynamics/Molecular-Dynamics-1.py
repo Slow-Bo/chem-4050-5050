@@ -193,6 +193,7 @@ def lennard_jones_potential(positions, epsilon, sigma:float, box_size:float, int
     #returns total potential
     return lj_potential
 
+
 #A function to shove all our force functions into one for conveninence
 def compute_forces(positions,k,r0,epsilon,sigma,box_size):
     #It just runs all my force funcctions, it isn't rocket science
@@ -213,7 +214,8 @@ def compute_potential(positions,k,r0,epsilon,sigma,box_size):
 #A function to calculate the verlet velocities
 def velocity_verlet(positions, box_size, velocities, forces, dt, mass, k, r0, epsilon, sigma):
     #Sets the velocities to half the new forces over the time step
-    velocities += 0.5 * forces / mass * dt
+    acceleration = 0.5 * forces / mass * dt
+    velocities = np.add(velocities,acceleration)
     #changes positions based on velocitiy
     positions += velocities * dt
     #Ensures nobody has left the box
@@ -223,7 +225,8 @@ def velocity_verlet(positions, box_size, velocities, forces, dt, mass, k, r0, ep
     #Calculates the new forces based on positions
     forces_new = compute_forces(positions,k,r0,epsilon,sigma,box_size)
     #Sets the velocities to the new forces over the other half of the time step
-    velocities += 0.5 * forces_new / mass * dt
+    acceleration = 0.5 * forces / mass * dt
+    velocities = np.add(velocities,acceleration)
     return positions, velocities, forces_new
 
 #A function to do the anderson rescaling
@@ -267,7 +270,7 @@ def random_change(positions):
     Chosen_X = Valid_Sites[Chosen_Site][0]
     Chosen_Y = Valid_Sites[Chosen_Site][1]
     #changes the positions by a small value
-    change = np.random.uniform(-0.1,0.1)
+    change = np.random.uniform(-10,10)
     positions[Chosen_X][Chosen_Y] += change
     return positions
 
@@ -279,30 +282,35 @@ def optimize_chain(positions,k,r0,epsilon,sigma,box_size,T,steps):
         new_positions = np.copy(positions)
         new_positions = random_change(new_positions)
         NewE = compute_potential(new_positions,k,r0,epsilon,sigma,box_size)
-        Acc = min(1, np.exp(-beta * (NewE - OldE)))
+        #Overflow protection
+        Overflow_Prot = min(10, -beta * (NewE - OldE))
+        Acc = min(1, np.exp(Overflow_Prot))
         if np.random.rand() < Acc:
             positions = new_positions
     return positions
-
+test_vels = np.zeros((3,3))
+for vel in range(len(test_vels)):
+    test_vels[vel] = [0.1,0.1,0.1]
 
 #Simulation parameters taken from the sample code, I will need to change mass since currently each paticle is a kilogram, but this will work for now
 dt = 0.01  #Time step if I make this in NANOSECONDS I can make length be in NANOMETERS
 optimization_steps = 1000 #The number of steps to be used in the optimizer
-total_steps = 1000  #Number of steps
+total_steps = 10000  #Number of steps
 box_size = 100.0  #Size of the cubic box
-k = 1.0  #Spring constant
+k = 525 #Spring constant: has to be large because of my larger than standard mass otherwise it can't overcome inital velocity
+#From 500 to 700 seems to work best
 #I changed the mass to 3.01E-25 since it is the weight of tyrosine in kilograms, which as a heavier amino acid would be a good stand in for whatever our monomer is.
 #Now it dosn't want to work, i'm changing it back
 #I figured it out, only the inital velocities function needs mass in kilograms, but everything else needs mass in daltons, so no matter what I put here it won't work,
 #Unless I bite the bullet and fix the inital velocities function
 #Okay I fixed it, now I will probably still set the mass to that of tyrosine since we aren't creating a chain of hydrogents after all
-mass = 181.07  #Particle mass NOT IN KILOGRAMS
+mass = 181.19  #Particle mass NOT IN KILOGRAMS
 r0 = 1.0  #Equilibrium bond length, I am not increasing this since these units should be, no this would be in meters right? if dt is in seconds anyway, what would dt need to be for this to make sense I wonder?
 # I figured it out, since the velocity is in meters/second if I say dt is in nanoseconds I can say this is nanometers, which is reasonable enough 10 angstrom, works for me.
 target_temperature = 0.1  #Target temperature
-rescale_interval = 50  #Steps between velocity rescaling
+rescale_interval = 100  #Steps between velocity rescaling
 n_particles = 20  #Number of particles
-epsilon_repulsive = 1.0  #Depth of repulsive LJ potential
+epsilon_repulsive = 2.5  #Depth of repulsive LJ potential
 epsilon_attractive = 0.5  #Depth of attractive LJ potential
 sigma = 1.0  #LJ potential parameter
 epsilon = [epsilon_attractive,epsilon_repulsive]
@@ -310,7 +318,7 @@ epsilon = [epsilon_attractive,epsilon_repulsive]
 #sets the seed for repeatability
 np.random.seed(42)
 # Arrays to store properties
-temperatures = np.linspace(0.1, 1.0, 10)
+temperatures = np.linspace(0.1, 5.0, 10)
 Rg_values = []
 Ree_values = []
 potential_energies = []
@@ -343,8 +351,10 @@ for T in temperatures:
     potential_energy_array = []
     #Creates an array named positions
     init_positions = create_chain(n_particles, box_size, r0)
+    print(compute_potential(init_positions,k,r0,epsilon,sigma,box_size))
     #Optimizes said array with metropolis
     optimized_positions = optimize_chain(init_positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
+    print(compute_potential(optimized_positions,k,r0,epsilon,sigma,box_size))
     #Calculates all velocities
     velocities = initial_velocities(n_particles, target_temperature, mass)
     for step in range(total_steps):
@@ -363,6 +373,20 @@ for T in temperatures:
     Rg_values.append(Rg)
     Ree_values.append(Ree)
     potential_energies.append(np.mean(potential_energy_array))
+
+
+#Functions to plot the shape of the final polymer
+#Sets a 3D grid using Matplotlib's built in 3D toolkit
+#Thanks to Reid for showing me how to set this up, I did not come up with this on my own
+plt.figure()
+ax = plt.subplot(111, projection='3d')
+ax.plot(optimized_positions[:, 0], optimized_positions[:, 1], optimized_positions[:, 2])
+plt.title('Final Positions of Particles')
+plt.xlabel('X Position (nm)')
+plt.ylabel('Y Position (nm)')
+ax.set_zlabel('Z Position (nm)')
+plt.show()
+
 
 
 # Plotting I took from the project page, it's pretty basic, I'm just lazy and didn't feel like coding it myself.
