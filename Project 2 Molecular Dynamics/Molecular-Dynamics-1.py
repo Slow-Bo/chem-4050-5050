@@ -297,8 +297,8 @@ dt = 0.01  #Time step if I make this in NANOSECONDS I can make length be in NANO
 optimization_steps = 1000 #The number of steps to be used in the optimizer
 total_steps = 10000  #Number of steps
 box_size = 100.0  #Size of the cubic box
-k = 525 #Spring constant: has to be large because of my larger than standard mass otherwise it can't overcome inital velocity
-#From 500 to 700 seems to work best
+k = 300 #Spring constant: has to be large because of my larger than standard mass otherwise it can't overcome inital velocity
+#From 50 to 400 seems to work best
 #I changed the mass to 3.01E-25 since it is the weight of tyrosine in kilograms, which as a heavier amino acid would be a good stand in for whatever our monomer is.
 #Now it dosn't want to work, i'm changing it back
 #I figured it out, only the inital velocities function needs mass in kilograms, but everything else needs mass in daltons, so no matter what I put here it won't work,
