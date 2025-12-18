@@ -309,8 +309,8 @@ r0 = 1.0  #Equilibrium bond length, I am not increasing this since these units s
 # I figured it out, since the velocity is in meters/second if I say dt is in nanoseconds I can say this is nanometers, which is reasonable enough 10 angstrom, works for me.
 target_temperature = 0.1  #Target temperature
 rescale_interval = 100  #Steps between velocity rescaling
-n_particles = 20  #Number of particles
-epsilon_repulsive = 2.5  #Depth of repulsive LJ potential
+n_particles = 10  #Number of particles
+epsilon_repulsive = 1.5  #Depth of repulsive LJ potential
 epsilon_attractive = 0.5  #Depth of attractive LJ potential
 sigma = 1.0  #LJ potential parameter
 epsilon = [epsilon_attractive,epsilon_repulsive]
@@ -351,9 +351,11 @@ for T in temperatures:
     potential_energy_array = []
     #Creates an array named positions
     init_positions = create_chain(n_particles, box_size, r0)
+    #A print function to see the initial unoptimized energy
     print(compute_potential(init_positions,k,r0,epsilon,sigma,box_size))
     #Optimizes said array with metropolis
     optimized_positions = optimize_chain(init_positions,k,r0,epsilon, sigma, box_size,T, optimization_steps)
+    #A print function to see the final optimized energy
     print(compute_potential(optimized_positions,k,r0,epsilon,sigma,box_size))
     #Calculates all velocities
     velocities = initial_velocities(n_particles, target_temperature, mass)
